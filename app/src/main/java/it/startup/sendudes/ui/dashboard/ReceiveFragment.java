@@ -12,20 +12,20 @@ import androidx.lifecycle.ViewModelProvider;
 
 import it.startup.sendudes.databinding.FragmentDashboardBinding;
 
-public class DashboardFragment extends Fragment {
+public class ReceiveFragment extends Fragment {
 
     private FragmentDashboardBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        DashboardViewModel dashboardViewModel =
-                new ViewModelProvider(this).get(DashboardViewModel.class);
+        ReceiveViewModel receiveViewModel =
+                new ViewModelProvider(this).get(ReceiveViewModel.class);
 
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
         final TextView textView = binding.textDashboard;
-        dashboardViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        receiveViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 

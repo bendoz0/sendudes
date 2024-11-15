@@ -3,23 +3,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/navigation_home">
+    app:startDestination="@+id/navigation_send">
 
     <fragment
-        android:id="@+id/navigation_home"
-        android:name="it.startup.sendudes.ui.home.HomeFragment"
-        android:label="@string/title_home"
+        android:id="@+id/navigation_send"
+        android:name="it.startup.sendudes.ui.home.SendFragment"
+        android:label="@string/title_send"
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/navigation_dashboard"
-        android:name="it.startup.sendudes.ui.dashboard.DashboardFragment"
-        android:label="@string/title_dashboard"
+        android:name="it.startup.sendudes.ui.dashboard.ReceiveFragment"
+        android:label="@string/title_receive"
         tools:layout="@layout/fragment_dashboard" />
 
     <fragment
         android:id="@+id/navigation_notifications"
-        android:name="it.startup.sendudes.ui.notifications.NotificationsFragment"
-        android:label="@string/title_notifications"
+        android:name="it.startup.sendudes.ui.notifications.SettingsFragment"
+        android:label="@string/title_settings"
         tools:layout="@layout/fragment_notifications" />
 </navigation>
