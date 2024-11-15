@@ -7,19 +7,19 @@
 
     <fragment
         android:id="@+id/navigation_send"
-        android:name="it.startup.sendudes.ui.home.SendFragment"
+        android:name="it.startup.sendudes.ui.send.SendFragment"
         android:label="@string/title_send"
         tools:layout="@layout/fragment_send" />
 
     <fragment
         android:id="@+id/navigation_dashboard"
-        android:name="it.startup.sendudes.ui.dashboard.ReceiveFragment"
+        android:name="it.startup.sendudes.ui.receive.ReceiveFragment"
         android:label="@string/title_receive"
         tools:layout="@layout/fragment_receive" />
 
     <fragment
         android:id="@+id/navigation_notifications"
-        android:name="it.startup.sendudes.ui.notifications.SettingsFragment"
+        android:name="it.startup.sendudes.ui.settings.SettingsFragment"
         android:label="@string/title_settings"
         tools:layout="@layout/fragment_settings" />
 </navigation>

@@ -1,16 +1,16 @@
-package it.startup.sendudes.ui.notifications;
+package it.startup.sendudes.ui.receive;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-public class SettingsViewModel extends ViewModel {
+public class ReceiveViewModel extends ViewModel {
 
     private final MutableLiveData<String> mText;
 
-    public SettingsViewModel() {
+    public ReceiveViewModel() {
         mText = new MutableLiveData<>();
-        mText.setValue("This is settings fragment");
+        mText.setValue("This is receive fragment");
     }
 
     public LiveData<String> getText() {

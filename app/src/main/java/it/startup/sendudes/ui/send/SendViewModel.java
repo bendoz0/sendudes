@@ -1,4 +1,4 @@
-package it.startup.sendudes.ui.home;
+package it.startup.sendudes.ui.send;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

@@ -1,4 +1,4 @@
-package it.startup.sendudes.ui.dashboard;
+package it.startup.sendudes.ui.settings;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,23 +10,22 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import it.startup.sendudes.databinding.FragmentSettingsBinding;
 
-import it.startup.sendudes.databinding.FragmentReceiveBinding;
+public class SettingsFragment extends Fragment {
 
-public class ReceiveFragment extends Fragment {
-
-    private FragmentReceiveBinding binding;
+    private FragmentSettingsBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        ReceiveViewModel receiveViewModel =
-                new ViewModelProvider(this).get(ReceiveViewModel.class);
+        SettingsViewModel notificationsViewModel =
+                new ViewModelProvider(this).get(SettingsViewModel.class);
 
-        binding = FragmentReceiveBinding.inflate(inflater, container, false);
+        binding = FragmentSettingsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textDashboard;
-        receiveViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        final TextView textView = binding.textNotifications;
+        notificationsViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 
