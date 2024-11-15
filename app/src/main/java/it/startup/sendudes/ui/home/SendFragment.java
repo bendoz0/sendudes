@@ -50,8 +50,6 @@ public class SendFragment extends Fragment {
 
 
     private void getMyIP(){
-        StrictMode.ThreadPolicy gfgPolicy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        StrictMode.setThreadPolicy(gfgPolicy);
             try {
                 InetAddress localAddress = null;
 
