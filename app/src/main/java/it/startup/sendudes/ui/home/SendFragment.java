@@ -1,6 +1,7 @@
 package it.startup.sendudes.ui.home;
 
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,11 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 
 import it.startup.sendudes.databinding.FragmentHomeBinding;
 
@@ -26,7 +32,7 @@ public class SendFragment extends Fragment {
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
-
+//        getMyIP();
         final TextView textView = binding.textHome;
         testBtn();
         sendViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
@@ -39,7 +45,49 @@ public class SendFragment extends Fragment {
 //       Button btn = root.findViewById(R.id.clickmebtn);
 
         final Button btn = binding.clickmebtn;
-        btn.setOnClickListener(v -> Toast.makeText(requireContext(), "This is a simple popup", Toast.LENGTH_SHORT).show());
+        btn.setOnClickListener(v -> getMyIP());
+    }
+
+
+    private void getMyIP(){
+        StrictMode.ThreadPolicy gfgPolicy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(gfgPolicy);
+            try {
+                InetAddress localAddress = null;
+
+                Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+                while (interfaces.hasMoreElements()) {
+                    NetworkInterface networkInterface = interfaces.nextElement();
+
+                    if (networkInterface.isLoopback() || !networkInterface.isUp()) {
+                        continue;
+                    }
+
+                    Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+                    while (addresses.hasMoreElements()) {
+                        InetAddress address = addresses.nextElement();
+
+                        if (!address.isLoopbackAddress() && address instanceof java.net.Inet4Address) {
+                            localAddress = address;
+                            break;
+                        }
+                    }
+
+                    if (localAddress != null) {
+                        break;
+                    }
+                }
+
+                if (localAddress != null) {
+                    System.out.println("Local IP Address: " + localAddress.getHostAddress());
+                } else {
+                    System.out.println("No non-loopback address found.");
+                }
+
+            } catch (SocketException e) {
+                System.err.println("Error while getting the network interfaces: " + e.getMessage());
+            }
+
     }
 
     @Override
