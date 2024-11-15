@@ -10,18 +10,18 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import it.startup.sendudes.databinding.FragmentNotificationsBinding;
+import it.startup.sendudes.databinding.FragmentSettingsBinding;
 
 public class SettingsFragment extends Fragment {
 
-    private FragmentNotificationsBinding binding;
+    private FragmentSettingsBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         SettingsViewModel notificationsViewModel =
                 new ViewModelProvider(this).get(SettingsViewModel.class);
 
-        binding = FragmentNotificationsBinding.inflate(inflater, container, false);
+        binding = FragmentSettingsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
         final TextView textView = binding.textNotifications;
