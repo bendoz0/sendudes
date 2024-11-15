@@ -11,11 +11,10 @@ import java.net.SocketException;
 import java.util.Enumeration;
 
 public class NetworkUtils {
-    private static DatagramSocket socket;
 
-    public static void tryBroadcast() {
+
+    public static void tryBroadcast(DatagramSocket socket) {
         try {
-            socket = new DatagramSocket();
             socket.setBroadcast(true);
 
             byte[] buffer = ("HELLO FROM: " + getMyIP()).getBytes();
@@ -23,16 +22,12 @@ public class NetworkUtils {
             socket.send(packet);
             Log.d("BROADCAST", "DONE");
         } catch (IOException e) {
-            Log.d("BROADCAST ERROR", e.getMessage() == null ? "ERROR NULL" : e.getMessage());
-        } finally {
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-            }
+            Log.d("BROADCAST ERROR", e.getMessage() == null ? "socket is null" : e.getMessage());
         }
     }
 
-    public static void broadcast() {
-        new Thread(NetworkUtils::tryBroadcast).start();
+    public static void broadcast(DatagramSocket socket) {
+        new Thread(() -> tryBroadcast(socket)).start();
     }
 
     public static String getMyIP() {
@@ -63,7 +58,6 @@ public class NetworkUtils {
             }
 
             if (localAddress != null) {
-                System.out.println("Local IP Address: " + localAddress.getHostAddress());
                 return localAddress.getHostAddress();
             } else {
                 System.out.println("No non-loopback address found.");
