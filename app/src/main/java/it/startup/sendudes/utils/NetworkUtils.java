@@ -33,14 +33,8 @@ public class NetworkUtils {
 
     public static void broadcastStopper(DatagramSocket socket) {
         Thread thread = new Thread(() -> {
-            try {
+            for (int i = 0; i < 3; i++) {
                 tryBroadcast(socket, MSG_CLIENT_NOT_RECEIVING);
-                Thread.sleep(500);
-                tryBroadcast(socket, MSG_CLIENT_NOT_RECEIVING);
-                Thread.sleep(500);
-                tryBroadcast(socket, MSG_CLIENT_NOT_RECEIVING);
-            } catch (InterruptedException e) {
-                System.out.println(e.getMessage());
             }
         });
         thread.start();
