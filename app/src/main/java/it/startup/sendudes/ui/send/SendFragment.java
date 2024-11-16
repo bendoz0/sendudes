@@ -1,6 +1,7 @@
 package it.startup.sendudes.ui.send;
 
 import static it.startup.sendudes.utils.NetworkUtils.findIps;
+import static it.startup.sendudes.utils.NetworkUtils.getFoundIps;
 import static it.startup.sendudes.utils.NetworkUtils.getMyIP;
 
 import android.os.Bundle;
@@ -36,7 +37,11 @@ public class SendFragment extends Fragment {
 //       Button btn = root.findViewById(R.id.clickmebtn);
 
         binding.textHome.setText(getMyIP());
+
+        binding.foundIps.setText(getFoundIps().toString());
+
     }
+
 
     private void showUsers() {
         discoveryThread = new Thread(() -> {

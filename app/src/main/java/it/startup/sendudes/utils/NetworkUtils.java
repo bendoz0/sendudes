@@ -9,26 +9,51 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
+import java.util.HashMap;
 
 public class NetworkUtils {
+    static final String MSG_CLIENT_NOT_RECEIVING = "Not receiving anymore";
+    private static final HashMap<String, String> foundIps = new HashMap<>();
 
-
-    public static void tryBroadcast(DatagramSocket socket) {
+    public static void tryBroadcast(DatagramSocket socket, String message) {
         try {
             socket.setBroadcast(true);
-
-            byte[] buffer = ("HELLO FROM: " + getMyIP()).getBytes();
+            byte[] buffer = !message.isEmpty() ? message.getBytes() : ("HELLO FROM: " + getMyIP()).getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName("255.255.255.255"), 8000);
             socket.send(packet);
-            Log.d("BROADCAST", "DONE");
+            Log.d("BROADCAST", "BROADCASTED IP SUCCESSFULLY");
         } catch (IOException e) {
             Log.d("BROADCAST ERROR", e.getMessage() == null ? "receiver socket is null" : "receiver " + e.getMessage());
         }
     }
 
     public static void broadcast(DatagramSocket socket) {
-        new Thread(() -> tryBroadcast(socket)).start();
+        new Thread(() -> tryBroadcast(socket, "")).start();
     }
+
+    public static void broadcastStopper(DatagramSocket socket) {
+        Thread thread = new Thread(() -> {
+            try {
+                tryBroadcast(socket, MSG_CLIENT_NOT_RECEIVING);
+                Thread.sleep(500);
+                tryBroadcast(socket, MSG_CLIENT_NOT_RECEIVING);
+                Thread.sleep(500);
+                tryBroadcast(socket, MSG_CLIENT_NOT_RECEIVING);
+            } catch (InterruptedException e) {
+                System.out.println(e.getMessage());
+            }
+        });
+        thread.start();
+
+        try {
+            thread.join();
+            if (!socket.isClosed()) socket.close();
+        } catch (InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
+        thread.interrupt();
+    }
+
 
     public static String getMyIP() {
         try {
@@ -79,9 +104,8 @@ public class NetworkUtils {
                 socket.receive(packet);
 
                 String msg = new String(buffer, 0, packet.getLength());
-                Log.d("RECEIVE: ", packet.getAddress().getHostName() + ": "
-                        + msg);
-
+                Log.d("RECEIVE: ", packet.getAddress().getHostName() + ": " + msg);
+                handleReceivedPacket(packet);
                 packet.setLength(buffer.length);
             }
         } catch (Exception e) {
@@ -89,4 +113,28 @@ public class NetworkUtils {
         }
     }
 
+    public static HashMap<String, String> getFoundIps() {
+        return foundIps;
+    }
+
+    private static void handleReceivedPacket(DatagramPacket receivedPack) {
+        String ip = receivedPack.getAddress().getHostAddress();
+        if (ip == null) {
+            return;
+        }
+        String hostName = receivedPack.getAddress().getHostName();
+        String msg = new String(receivedPack.getData(), 0, receivedPack.getLength());
+
+        switch (msg) {
+            case MSG_CLIENT_NOT_RECEIVING:
+                foundIps.remove(ip);
+                break;
+            default:
+                if (!foundIps.containsKey(ip) && !ip.contains(getMyIP())) {
+                    System.out.println("ADDED NEW IP: " + ip);
+                    foundIps.put(ip, hostName);
+                }
+                break;
+        }
+    }
 }

@@ -1,6 +1,8 @@
 package it.startup.sendudes.ui.receive;
 
 import static it.startup.sendudes.utils.NetworkUtils.broadcast;
+import static it.startup.sendudes.utils.NetworkUtils.broadcastStopper;
+import static it.startup.sendudes.utils.NetworkUtils.tryBroadcast;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -40,11 +42,10 @@ public class ReceiveFragment extends Fragment {
     private void broadcastRepeater() {
         broadcastThread = new Thread(() -> {
             try {
-                Thread.sleep(5000);
                 while (!Thread.currentThread().isInterrupted()) {
                     broadcast(socket);
                     // todo: make it efficient
-                    Thread.sleep(5000);
+                    Thread.sleep(2000);
                 }
             } catch (Exception e) {
                 Log.d("Broadcast Repeater Thread", e.getMessage() == null ? "receiver socket is null" : e.getMessage());
@@ -62,7 +63,7 @@ public class ReceiveFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         if (broadcastThread != null && broadcastThread.isAlive()) broadcastThread.interrupt();
-        if (!socket.isClosed()) socket.close();
+        broadcastStopper(socket);
         binding = null;
     }
 }
