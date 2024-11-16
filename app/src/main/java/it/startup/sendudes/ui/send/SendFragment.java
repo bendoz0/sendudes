@@ -31,11 +31,23 @@ public class SendFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         binding = FragmentSendBinding.inflate(inflater, container, false);
-        View root = binding.getRoot();
-        binding.btnGetIp.setOnClickListener(v -> onClickGetIp());
+
+        return binding.getRoot();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
         showUsers();
+        binding.btnGetIp.setOnClickListener(v -> onClickGetIp());
         binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
-        return root;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (discoveryThread != null && discoveryThread.isAlive()) discoveryThread.interrupt();
+        if (!socket.isClosed()) socket.close();
     }
 
     private void onClickGetIp() {
@@ -106,8 +118,6 @@ public class SendFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (discoveryThread != null && discoveryThread.isAlive()) discoveryThread.interrupt();
-        if (!socket.isClosed()) socket.close();
         binding = null;
     }
 }

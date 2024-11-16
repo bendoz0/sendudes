@@ -32,13 +32,24 @@ public class ReceiveFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentReceiveBinding.inflate(inflater, container, false);
-        View root = binding.getRoot();
-        binding.btnSearchDevices.setOnClickListener(v -> onClickSearchDevices());
 
-        broadcastRepeater();
-        return root;
+        return binding.getRoot();
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        broadcastRepeater();
+        binding.btnSearchDevices.setOnClickListener(v -> onClickSearchDevices());
+
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (broadcastThread != null && broadcastThread.isAlive()) broadcastThread.interrupt();
+        broadcastStopper(socket);
+    }
     private void broadcastRepeater() {
         broadcastThread = new Thread(() -> {
             try {
@@ -62,8 +73,6 @@ public class ReceiveFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (broadcastThread != null && broadcastThread.isAlive()) broadcastThread.interrupt();
-        broadcastStopper(socket);
         binding = null;
     }
 }
