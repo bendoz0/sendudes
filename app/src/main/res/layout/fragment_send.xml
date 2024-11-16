@@ -7,12 +7,12 @@
     tools:context=".ui.send.SendFragment">
 
     <TextView
-        android:id="@+id/textHome"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
+        android:id="@+id/fileChosen"
+        android:layout_width="0dp"
+        android:layout_height="83dp"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:textAlignment="center"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -20,18 +20,19 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.122" />
+        app:layout_constraintVertical_bias="0.65" />
 
     <Button
         android:id="@+id/btn_get_ip"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="161dp"
-        android:layout_marginTop="44dp"
-        android:layout_marginEnd="162dp"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginTop="52dp"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_marginBottom="16dp"
         android:text="@string/click_test"
+        app:layout_constraintBottom_toTopOf="@+id/tw_userIp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -40,25 +41,45 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="161dp"
-        android:layout_marginTop="152dp"
+        android:layout_marginTop="21dp"
         android:layout_marginEnd="162dp"
+        android:layout_marginBottom="136dp"
         android:text="@string/click_file"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.488"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/fileChosen" />
 
     <TextView
         android:id="@+id/found_ips"
-        android:layout_width="306dp"
-        android:layout_height="291dp"
-        android:layout_marginStart="52dp"
-        android:layout_marginTop="44dp"
-        android:layout_marginEnd="53dp"
+        android:layout_width="0dp"
+        android:layout_height="172dp"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginTop="15dp"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_marginBottom="58dp"
         android:text="TextView"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/fileChosen"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textHome" />
+        app:layout_constraintTop_toBottomOf="@+id/tw_userIp" />
+
+    <TextView
+        android:id="@+id/tw_userIp"
+        android:layout_width="0dp"
+        android:layout_height="23dp"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginTop="23dp"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_marginBottom="26dp"
+        android:text="TextView"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/found_ips"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_get_ip" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -53,7 +53,7 @@ public class SendFragment extends Fragment {
     private void onClickGetIp() {
 //       got em 2 ways to access em ui elements usin java, the one right below this line basically uses a traditional way to access the ui elements, and this way doesn't provide type safety, on the other hand the viewModel way does cuz it's binded to the fragment.
 //       Button btn = root.findViewById(R.id.clickmebtn);
-        binding.textHome.setText(getMyIP());
+        binding.twUserIp.setText(getMyIP());
 
         binding.foundIps.setText(getFoundIps().toString());
 
@@ -111,7 +111,7 @@ public class SendFragment extends Fragment {
     //metodo che viene eseguito quando viene selezionato un file
     private void onFileChosen(Uri fileUri) {
         // Aggiorna la TextView con il percorso del file scelto
-        binding.textHome.setText("File scelto: " + fileUri.toString());
+        binding.fileChosen.setText("File scelto: " + fileUri.toString());
     }
 
 
