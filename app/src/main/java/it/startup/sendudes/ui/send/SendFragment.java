@@ -1,6 +1,7 @@
 package it.startup.sendudes.ui.send;
 
 import static it.startup.sendudes.utils.NetworkUtils.findIps;
+import static it.startup.sendudes.utils.NetworkUtils.getFoundIps;
 import static it.startup.sendudes.utils.NetworkUtils.getMyIP;
 
 import android.content.Intent;
@@ -41,7 +42,11 @@ public class SendFragment extends Fragment {
 //       got em 2 ways to access em ui elements usin java, the one right below this line basically uses a traditional way to access the ui elements, and this way doesn't provide type safety, on the other hand the viewModel way does cuz it's binded to the fragment.
 //       Button btn = root.findViewById(R.id.clickmebtn);
         binding.textHome.setText(getMyIP());
+
+        binding.foundIps.setText(getFoundIps().toString());
+
     }
+
 
     private void showUsers() {
         discoveryThread = new Thread(() -> {
