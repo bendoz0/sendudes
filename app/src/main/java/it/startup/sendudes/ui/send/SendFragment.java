@@ -98,9 +98,6 @@ public class SendFragment extends Fragment {
     }
 
 
-
-
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
