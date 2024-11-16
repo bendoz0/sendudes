@@ -47,7 +47,7 @@ public class ReceiveFragment extends Fragment {
                     Thread.sleep(5000);
                 }
             } catch (Exception e) {
-                Log.d("Broadcast Repeater Thread", e.getMessage() == null ? "socket is null" : e.getMessage());
+                Log.d("Broadcast Repeater Thread", e.getMessage() == null ? "receiver socket is null" : e.getMessage());
             }
         });
 

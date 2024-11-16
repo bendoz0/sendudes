@@ -22,7 +22,7 @@ public class NetworkUtils {
             socket.send(packet);
             Log.d("BROADCAST", "DONE");
         } catch (IOException e) {
-            Log.d("BROADCAST ERROR", e.getMessage() == null ? "socket is null" : e.getMessage());
+            Log.d("BROADCAST ERROR", e.getMessage() == null ? "receiver socket is null" : "receiver " + e.getMessage());
         }
     }
 
@@ -68,4 +68,25 @@ public class NetworkUtils {
         }
         return "Cant find IP";
     }
+
+    public static void findIps(DatagramSocket socket) {
+        try {
+            byte[] buffer = new byte[2048];
+
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+
+            while (true) {
+                socket.receive(packet);
+
+                String msg = new String(buffer, 0, packet.getLength());
+                Log.d("RECEIVE: ", packet.getAddress().getHostName() + ": "
+                        + msg);
+
+                packet.setLength(buffer.length);
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+    }
+
 }
