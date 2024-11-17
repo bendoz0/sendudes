@@ -47,7 +47,7 @@ public class ReceiveFragment extends Fragment {
             throw new RuntimeException(e);
         }
         broadcastReplier();
-        startServerConnection(FILE_TRANSFER_PORT);
+        startServer();
         Log.d("MESSAGE: ", "STARTED SUCCESSFULLY: " + socket.isClosed());
 
     }
@@ -55,18 +55,21 @@ public class ReceiveFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        broadcast(socket,  MSG_CLIENT_NOT_RECEIVING);
-        if (broadcastReplierThread != null && broadcastReplierThread.isAlive()) broadcastReplierThread.interrupt();
+        broadcast(socket, MSG_CLIENT_NOT_RECEIVING);
+        if (broadcastReplierThread != null && broadcastReplierThread.isAlive())
+            broadcastReplierThread.interrupt();
         if (!socket.isClosed()) socket.close();
         if (!listenerSocket.isClosed()) listenerSocket.close();
         Log.d("MESSAGE: ", "CLOSED SUCCESSFULLY: " + socket.isClosed());
-
+    }
+    private void startServer() {
+        new Thread(() -> startServerConnection(FILE_TRANSFER_PORT)).start();
     }
 
     private void broadcastReplier() {
         broadcastReplierThread = new Thread(() -> {
             try {
-                broadcastHandshake(socket,listenerSocket);
+                broadcastHandshake(socket, listenerSocket);
 
             } catch (Exception e) {
                 System.out.println(e.getMessage());
