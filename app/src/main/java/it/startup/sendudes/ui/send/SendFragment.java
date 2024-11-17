@@ -35,6 +35,7 @@ public class SendFragment extends Fragment {
     //FragmentHomeBinding is a class generated automatically when View Binding is enabled (in the android v8 and later on ig)
     private FragmentSendBinding binding;
     private Thread broadcastHandshakeThread;
+    private Thread tcpClientThread;
     private DatagramSocket socket;
     private DatagramSocket listenerSocket;
     Map.Entry<String, String> entry;
@@ -69,9 +70,16 @@ public class SendFragment extends Fragment {
         });
         broadcastHandshaker(listenerSocket);
         if (binding.btnSend.isEnabled())
-            binding.btnSend.setOnClickListener(l -> clientConnection(entry.getKey(), FILE_TRANSFER_PORT));
+            binding.btnSend.setOnClickListener(l -> TCP_clientThread(entry.getKey()));
 
         Log.d("MESSAGE: ", "STARTED SUCCESSFULLY: " + socket.isClosed());
+    }
+
+    public void TCP_clientThread(String ip){
+        tcpClientThread = new Thread(() -> {
+            clientConnection(ip, FILE_TRANSFER_PORT);
+        });
+        tcpClientThread.start();
     }
 
     @Override
@@ -79,6 +87,8 @@ public class SendFragment extends Fragment {
         super.onStop();
         if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
             broadcastHandshakeThread.interrupt();
+        if (tcpClientThread != null && tcpClientThread.isAlive())
+            tcpClientThread.interrupt();
         if (!socket.isClosed()) socket.close();
         if (!listenerSocket.isClosed()) listenerSocket.close();
 
