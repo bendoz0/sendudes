@@ -12,6 +12,8 @@ import java.util.Enumeration;
 import java.util.HashMap;
 
 public class NetworkUtils {
+    public static final int PING_PORT = 8000;
+    public static final int RECEIVE_PORT = 8001;
     public static final String MSG_CLIENT_NOT_RECEIVING = "NOT_RECEIVING";
     public static final String MSG_CLIENT_PING = "PING";
     static final String MSG_CLIENT_RECEIVING = "RECEIVING";
@@ -21,16 +23,22 @@ public class NetworkUtils {
         try {
             socket.setBroadcast(true);
             byte[] buffer = !message.isEmpty() ? message.getBytes() : ("HELLO FROM: " + getMyIP()).getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName("255.255.255.255"), 8000);
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName("255.255.255.255"),socket.getLocalPort());
             socket.send(packet);
-            Log.d("BROADCAST", "BROADCASTED IP SUCCESSFULLY");
+            Log.d("BROADCAST", "BROADCASTED MSG: " + message + " PORT: " + socket.getLocalPort());
         } catch (IOException e) {
             Log.d("BROADCAST ERROR", e.getMessage() == null ? "receiver socket is null" : "receiver " + e.getMessage());
         }
     }
 
     public static void broadcast(DatagramSocket socket, String message) {
-        new Thread(() -> tryBroadcast(socket, message)).start();
+        Thread x = new Thread(() -> tryBroadcast(socket, message));
+        x.start();
+        try {
+            x.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 //    public static void broadcastStopper(DatagramSocket socket) {
@@ -90,14 +98,14 @@ public class NetworkUtils {
         return "Cant find IP";
     }
 
-    public static void broadcastHandshake(DatagramSocket socket) {
+    public static void broadcastHandshake(DatagramSocket socket, DatagramSocket listenerSocket) {
         try {
             byte[] buffer = new byte[2048];
 
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
             while (true) {
-                socket.receive(packet);
+                listenerSocket.receive(packet);
 
                 String msg = new String(buffer, 0, packet.getLength());
                 Log.d("RECEIVE: ", packet.getAddress().getHostName() + ": " + msg);

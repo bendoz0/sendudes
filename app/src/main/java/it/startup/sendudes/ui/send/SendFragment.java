@@ -1,6 +1,8 @@
 package it.startup.sendudes.ui.send;
 
 import static it.startup.sendudes.utils.NetworkUtils.MSG_CLIENT_PING;
+import static it.startup.sendudes.utils.NetworkUtils.PING_PORT;
+import static it.startup.sendudes.utils.NetworkUtils.RECEIVE_PORT;
 import static it.startup.sendudes.utils.NetworkUtils.broadcast;
 import static it.startup.sendudes.utils.NetworkUtils.broadcastHandshake;
 import static it.startup.sendudes.utils.NetworkUtils.getFoundIps;
@@ -44,8 +46,8 @@ public class SendFragment extends Fragment {
     public void onStart() {
         super.onStart();
         try {
-            socket = new DatagramSocket(8000);
-            listenerSocket = new DatagramSocket(8000);
+            socket = new DatagramSocket(PING_PORT);
+            listenerSocket = new DatagramSocket(RECEIVE_PORT);
         } catch (SocketException e) {
             Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
         }
@@ -53,7 +55,10 @@ public class SendFragment extends Fragment {
 
         binding.btnGetIp.setOnClickListener(v -> onClickGetIp());
         binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
-        binding.btnNetworkScanner.setOnClickListener(v -> broadcast(socket, MSG_CLIENT_PING));
+        binding.btnNetworkScanner.setOnClickListener(v -> {
+            broadcast(socket, MSG_CLIENT_PING);
+            binding.foundIps.setText(getFoundIps().toString());
+        });
         broadcastHandshaker(listenerSocket);
         Log.d("MESSAGE: ", "STARTED SUCCESSFULLY: " + socket.isClosed());
     }
@@ -64,6 +69,8 @@ public class SendFragment extends Fragment {
         if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
             broadcastHandshakeThread.interrupt();
         if (!socket.isClosed()) socket.close();
+        if (!listenerSocket.isClosed()) listenerSocket.close();
+
         Log.d("MESSAGE: ", "CLOSED SUCCESSFULLY: " + socket.isClosed());
 
     }
@@ -72,13 +79,12 @@ public class SendFragment extends Fragment {
 //       got em 2 ways to access em ui elements usin java, the one right below this line basically uses a traditional way to access the ui elements, and this way doesn't provide type safety, on the other hand the viewModel way does cuz it's binded to the fragment.
 //       Button btn = root.findViewById(R.id.clickmebtn);
         binding.twUserIp.setText(getMyIP());
-        binding.foundIps.setText(getFoundIps().toString());
     }
 
     private void broadcastHandshaker(DatagramSocket socket) {
         broadcastHandshakeThread = new Thread(() -> {
             try {
-                broadcastHandshake(socket);
+                broadcastHandshake(socket, listenerSocket);
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }

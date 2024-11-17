@@ -1,6 +1,8 @@
 package it.startup.sendudes.ui.receive;
 
 import static it.startup.sendudes.utils.NetworkUtils.MSG_CLIENT_NOT_RECEIVING;
+import static it.startup.sendudes.utils.NetworkUtils.PING_PORT;
+import static it.startup.sendudes.utils.NetworkUtils.RECEIVE_PORT;
 import static it.startup.sendudes.utils.NetworkUtils.broadcast;
 import static it.startup.sendudes.utils.NetworkUtils.broadcastHandshake;
 
@@ -23,8 +25,8 @@ public class ReceiveFragment extends Fragment {
 
     private FragmentReceiveBinding binding;
     private DatagramSocket socket;
+    private DatagramSocket listenerSocket;
     private Thread broadcastReplierThread;
-
 
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -37,7 +39,8 @@ public class ReceiveFragment extends Fragment {
     public void onStart() {
         super.onStart();
         try {
-            socket = new DatagramSocket(8000);
+            socket = new DatagramSocket(RECEIVE_PORT);
+            listenerSocket = new DatagramSocket(PING_PORT);
         } catch (SocketException e) {
             throw new RuntimeException(e);
         }
@@ -52,6 +55,7 @@ public class ReceiveFragment extends Fragment {
         broadcast(socket,  MSG_CLIENT_NOT_RECEIVING);
         if (broadcastReplierThread != null && broadcastReplierThread.isAlive()) broadcastReplierThread.interrupt();
         if (!socket.isClosed()) socket.close();
+        if (!listenerSocket.isClosed()) listenerSocket.close();
         Log.d("MESSAGE: ", "CLOSED SUCCESSFULLY: " + socket.isClosed());
 
     }
@@ -59,7 +63,7 @@ public class ReceiveFragment extends Fragment {
     private void broadcastReplier() {
         broadcastReplierThread = new Thread(() -> {
             try {
-                broadcastHandshake(socket);
+                broadcastHandshake(socket,listenerSocket);
 
             } catch (Exception e) {
                 System.out.println(e.getMessage());
