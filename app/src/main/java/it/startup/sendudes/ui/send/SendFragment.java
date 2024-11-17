@@ -69,13 +69,18 @@ public class SendFragment extends Fragment {
             } else binding.foundIps.setText("No user found");
         });
         broadcastHandshaker(listenerSocket);
-        if (binding.btnSend.isEnabled())
-            binding.btnSend.setOnClickListener(l -> TCP_clientThread(entry.getKey()));
+        binding.btnSend.setOnClickListener(l -> {
+            if (binding.btnSend.isEnabled()) {
+                System.out.println(entry.getKey());
+                TCP_clientThread(entry.getKey());
+            }
+        });
+
 
         Log.d("MESSAGE: ", "STARTED SUCCESSFULLY: " + socket.isClosed());
     }
 
-    public void TCP_clientThread(String ip){
+    public void TCP_clientThread(String ip) {
         tcpClientThread = new Thread(() -> {
             clientConnection(ip, FILE_TRANSFER_PORT);
         });
