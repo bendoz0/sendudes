@@ -1,12 +1,14 @@
 package it.startup.sendudes.ui.send;
 
-import static it.startup.sendudes.utils.NetworkUtils.MSG_CLIENT_PING;
-import static it.startup.sendudes.utils.NetworkUtils.PING_PORT;
-import static it.startup.sendudes.utils.NetworkUtils.RECEIVE_PORT;
-import static it.startup.sendudes.utils.NetworkUtils.broadcast;
-import static it.startup.sendudes.utils.NetworkUtils.broadcastHandshake;
-import static it.startup.sendudes.utils.NetworkUtils.getFoundIps;
-import static it.startup.sendudes.utils.NetworkUtils.getMyIP;
+import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
+import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
+import static it.startup.sendudes.utils.IConstants.PING_PORT;
+import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
+import static it.startup.sendudes.utils.TCP_NetworkUtils.clientConnection;
+import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcast;
+import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcastHandshake;
+import static it.startup.sendudes.utils.UDP_NetworkUtils.getFoundIps;
+import static it.startup.sendudes.utils.UDP_NetworkUtils.getMyIP;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -24,6 +26,7 @@ import androidx.fragment.app.Fragment;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.Map;
 
 
 import it.startup.sendudes.databinding.FragmentSendBinding;
@@ -34,11 +37,11 @@ public class SendFragment extends Fragment {
     private Thread broadcastHandshakeThread;
     private DatagramSocket socket;
     private DatagramSocket listenerSocket;
+    Map.Entry<String, String> entry;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         binding = FragmentSendBinding.inflate(inflater, container, false);
-
         return binding.getRoot();
     }
 
@@ -53,13 +56,21 @@ public class SendFragment extends Fragment {
         }
 
 
+        binding.btnSend.setEnabled(false);
         binding.btnGetIp.setOnClickListener(v -> onClickGetIp());
         binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
         binding.btnNetworkScanner.setOnClickListener(v -> {
             broadcast(socket, MSG_CLIENT_PING);
-            binding.foundIps.setText(getFoundIps().toString());
+            if (getFoundIps().isPresent()) {
+                binding.foundIps.setText((String) getFoundIps().get().toString());
+                entry = getFoundIps().get().entrySet().iterator().next();
+                binding.btnSend.setEnabled(true);
+            } else binding.foundIps.setText("No user found");
         });
         broadcastHandshaker(listenerSocket);
+        if (binding.btnSend.isEnabled())
+            binding.btnSend.setOnClickListener(l -> clientConnection(entry.getKey(), FILE_TRANSFER_PORT));
+
         Log.d("MESSAGE: ", "STARTED SUCCESSFULLY: " + socket.isClosed());
     }
 

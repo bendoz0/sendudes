@@ -1,10 +1,12 @@
 package it.startup.sendudes.ui.receive;
 
-import static it.startup.sendudes.utils.NetworkUtils.MSG_CLIENT_NOT_RECEIVING;
-import static it.startup.sendudes.utils.NetworkUtils.PING_PORT;
-import static it.startup.sendudes.utils.NetworkUtils.RECEIVE_PORT;
-import static it.startup.sendudes.utils.NetworkUtils.broadcast;
-import static it.startup.sendudes.utils.NetworkUtils.broadcastHandshake;
+import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
+import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_NOT_RECEIVING;
+import static it.startup.sendudes.utils.IConstants.PING_PORT;
+import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
+import static it.startup.sendudes.utils.TCP_NetworkUtils.startServerConnection;
+import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcast;
+import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcastHandshake;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -45,6 +47,7 @@ public class ReceiveFragment extends Fragment {
             throw new RuntimeException(e);
         }
         broadcastReplier();
+        startServerConnection(FILE_TRANSFER_PORT);
         Log.d("MESSAGE: ", "STARTED SUCCESSFULLY: " + socket.isClosed());
 
     }
