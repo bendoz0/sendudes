@@ -1,5 +1,9 @@
 package it.startup.sendudes.utils;
 
+import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_NOT_RECEIVING;
+import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
+import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_RECEIVING;
+
 import android.util.Log;
 
 import java.io.IOException;
@@ -10,20 +14,17 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Optional;
 
-public class NetworkUtils {
-    public static final int PING_PORT = 8000;
-    public static final int RECEIVE_PORT = 8001;
-    public static final String MSG_CLIENT_NOT_RECEIVING = "NOT_RECEIVING";
-    public static final String MSG_CLIENT_PING = "PING";
-    static final String MSG_CLIENT_RECEIVING = "RECEIVING";
+public class UDP_NetworkUtils {
+
     private static final HashMap<String, String> foundIps = new HashMap<>();
 
     public static void tryBroadcast(DatagramSocket socket, String message) {
         try {
             socket.setBroadcast(true);
             byte[] buffer = !message.isEmpty() ? message.getBytes() : ("HELLO FROM: " + getMyIP()).getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName("255.255.255.255"),socket.getLocalPort());
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName("255.255.255.255"), socket.getLocalPort());
             socket.send(packet);
             Log.d("BROADCAST", "BROADCASTED MSG: " + message + " PORT: " + socket.getLocalPort());
         } catch (IOException e) {
@@ -40,23 +41,6 @@ public class NetworkUtils {
             throw new RuntimeException(e);
         }
     }
-
-//    public static void broadcastStopper(DatagramSocket socket) {
-//        Thread thread = new Thread(() -> {
-//            for (int i = 0; i < 3; i++) {
-//                tryBroadcast(socket, MSG_CLIENT_NOT_RECEIVING);
-//            }
-//        });
-//        thread.start();
-//
-//        try {
-//            thread.join();
-//            if (!socket.isClosed()) socket.close();
-//        } catch (InterruptedException e) {
-//            System.out.println(e.getMessage());
-//        }
-//        thread.interrupt();
-//    }
 
 
     public static String getMyIP() {
@@ -117,8 +101,9 @@ public class NetworkUtils {
         }
     }
 
-    public static HashMap<String, String> getFoundIps() {
-        return foundIps;
+    public static Optional<HashMap<String, String>> getFoundIps() {
+        if (!foundIps.isEmpty()) return Optional.of(foundIps);
+        return Optional.empty();
     }
 
     // TODO: MAKE USER REMOVER EFFICIENT
@@ -145,4 +130,6 @@ public class NetworkUtils {
                 break;
         }
     }
+
+
 }
