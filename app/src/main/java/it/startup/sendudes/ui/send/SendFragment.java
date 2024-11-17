@@ -1,12 +1,15 @@
 package it.startup.sendudes.ui.send;
 
-import static it.startup.sendudes.utils.NetworkUtils.findIps;
+import static it.startup.sendudes.utils.NetworkUtils.MSG_CLIENT_PING;
+import static it.startup.sendudes.utils.NetworkUtils.broadcast;
+import static it.startup.sendudes.utils.NetworkUtils.broadcastHandshake;
 import static it.startup.sendudes.utils.NetworkUtils.getFoundIps;
 import static it.startup.sendudes.utils.NetworkUtils.getMyIP;
 
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import java.net.DatagramSocket;
+import java.net.SocketException;
 
 
 import it.startup.sendudes.databinding.FragmentSendBinding;
@@ -25,8 +29,9 @@ import it.startup.sendudes.databinding.FragmentSendBinding;
 public class SendFragment extends Fragment {
     //FragmentHomeBinding is a class generated automatically when View Binding is enabled (in the android v8 and later on ig)
     private FragmentSendBinding binding;
-    private Thread discoveryThread;
+    private Thread broadcastHandshakeThread;
     private DatagramSocket socket;
+    private DatagramSocket listenerSocket;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
@@ -38,41 +43,49 @@ public class SendFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        showUsers();
+        try {
+            socket = new DatagramSocket(8000);
+            listenerSocket = new DatagramSocket(8000);
+        } catch (SocketException e) {
+            Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
+        }
+
+
         binding.btnGetIp.setOnClickListener(v -> onClickGetIp());
         binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
+        binding.btnNetworkScanner.setOnClickListener(v -> broadcast(socket, MSG_CLIENT_PING));
+        broadcastHandshaker(listenerSocket);
+        Log.d("MESSAGE: ", "STARTED SUCCESSFULLY: " + socket.isClosed());
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if (discoveryThread != null && discoveryThread.isAlive()) discoveryThread.interrupt();
+        if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
+            broadcastHandshakeThread.interrupt();
         if (!socket.isClosed()) socket.close();
+        Log.d("MESSAGE: ", "CLOSED SUCCESSFULLY: " + socket.isClosed());
+
     }
 
     private void onClickGetIp() {
 //       got em 2 ways to access em ui elements usin java, the one right below this line basically uses a traditional way to access the ui elements, and this way doesn't provide type safety, on the other hand the viewModel way does cuz it's binded to the fragment.
 //       Button btn = root.findViewById(R.id.clickmebtn);
         binding.twUserIp.setText(getMyIP());
-
         binding.foundIps.setText(getFoundIps().toString());
-
     }
 
-
-    private void showUsers() {
-        discoveryThread = new Thread(() -> {
+    private void broadcastHandshaker(DatagramSocket socket) {
+        broadcastHandshakeThread = new Thread(() -> {
             try {
-                socket = new DatagramSocket(8000);
-                findIps(socket);
-
+                broadcastHandshake(socket);
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
         });
-
-        discoveryThread.start();
+        broadcastHandshakeThread.start();
     }
+
 
     //Metodo per gestire il Btn "Choose File"
     private void onClickChooseFile() {
@@ -91,22 +104,21 @@ public class SendFragment extends Fragment {
     }
 
     /*
-    * "filePickerLauncher" variabile di tipo ActivityResultLauncher<Intent>per gestire un intento
-    * "registerForActivityResult" è un metodo che crea un oggetto "result" passandogli una attività da eseguire con un intent
-    * "result.getResultCode()" questo contine un valore per indicare se è andato a buon fine o meno (1-RESULT_OK oppure 2-RESULT_CENCELED)
-    * "getData()" contiene l'intent usato e il file se è stato selezionato
-    */
-    private final ActivityResultLauncher<Intent> filePickerLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == getActivity().RESULT_OK && result.getData() != null) {
-                    Uri fileUri = result.getData().getData();
-                    if (fileUri != null) {
-                        onFileChosen(fileUri);
-                    }
-                } else {
-                    Toast.makeText(getContext(), "Nessun file selezionato", Toast.LENGTH_SHORT).show();
-                }
-            });
+     * "filePickerLauncher" variabile di tipo ActivityResultLauncher<Intent>per gestire un intento
+     * "registerForActivityResult" è un metodo che crea un oggetto "result" passandogli una attività da eseguire con un intent
+     * "result.getResultCode()" questo contine un valore per indicare se è andato a buon fine o meno (1-RESULT_OK oppure 2-RESULT_CENCELED)
+     * "getData()" contiene l'intent usato e il file se è stato selezionato
+     */
+    private final ActivityResultLauncher<Intent> filePickerLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        if (result.getResultCode() == getActivity().RESULT_OK && result.getData() != null) {
+            Uri fileUri = result.getData().getData();
+            if (fileUri != null) {
+                onFileChosen(fileUri);
+            }
+        } else {
+            Toast.makeText(getContext(), "Nessun file selezionato", Toast.LENGTH_SHORT).show();
+        }
+    });
 
     //metodo che viene eseguito quando viene selezionato un file
     private void onFileChosen(Uri fileUri) {

@@ -1,8 +1,8 @@
 package it.startup.sendudes.ui.receive;
 
+import static it.startup.sendudes.utils.NetworkUtils.MSG_CLIENT_NOT_RECEIVING;
 import static it.startup.sendudes.utils.NetworkUtils.broadcast;
-import static it.startup.sendudes.utils.NetworkUtils.broadcastStopper;
-import static it.startup.sendudes.utils.NetworkUtils.tryBroadcast;
+import static it.startup.sendudes.utils.NetworkUtils.broadcastHandshake;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -22,12 +22,9 @@ import it.startup.sendudes.databinding.FragmentReceiveBinding;
 public class ReceiveFragment extends Fragment {
 
     private FragmentReceiveBinding binding;
-    private final DatagramSocket socket;
-    private Thread broadcastThread;
+    private DatagramSocket socket;
+    private Thread broadcastReplierThread;
 
-    public ReceiveFragment() throws SocketException {
-        this.socket = new DatagramSocket();
-    }
 
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -39,35 +36,37 @@ public class ReceiveFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        broadcastRepeater();
-        binding.btnSearchDevices.setOnClickListener(v -> onClickSearchDevices());
+        try {
+            socket = new DatagramSocket(8000);
+        } catch (SocketException e) {
+            throw new RuntimeException(e);
+        }
+        broadcastReplier();
+        Log.d("MESSAGE: ", "STARTED SUCCESSFULLY: " + socket.isClosed());
 
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if (broadcastThread != null && broadcastThread.isAlive()) broadcastThread.interrupt();
-        broadcastStopper(socket);
+        broadcast(socket,  MSG_CLIENT_NOT_RECEIVING);
+        if (broadcastReplierThread != null && broadcastReplierThread.isAlive()) broadcastReplierThread.interrupt();
+        if (!socket.isClosed()) socket.close();
+        Log.d("MESSAGE: ", "CLOSED SUCCESSFULLY: " + socket.isClosed());
+
     }
-    private void broadcastRepeater() {
-        broadcastThread = new Thread(() -> {
+
+    private void broadcastReplier() {
+        broadcastReplierThread = new Thread(() -> {
             try {
-                while (!Thread.currentThread().isInterrupted()) {
-                    broadcast(socket);
-                    // todo: make it efficient
-                    Thread.sleep(2000);
-                }
+                broadcastHandshake(socket);
+
             } catch (Exception e) {
-                Log.d("Broadcast Repeater Thread", e.getMessage() == null ? "receiver socket is null" : e.getMessage());
+                System.out.println(e.getMessage());
             }
         });
 
-        broadcastThread.start();
-    }
-
-    private void onClickSearchDevices() {
-        broadcast(socket);
+        broadcastReplierThread.start();
     }
 
     @Override
