@@ -12,13 +12,13 @@
         tools:layout="@layout/fragment_send" />
 
     <fragment
-        android:id="@+id/navigation_dashboard"
+        android:id="@+id/navigation_receive"
         android:name="it.startup.sendudes.ui.receive.ReceiveFragment"
         android:label="@string/title_receive"
         tools:layout="@layout/fragment_receive" />
 
     <fragment
-        android:id="@+id/navigation_notifications"
+        android:id="@+id/navigation_settings"
         android:name="it.startup.sendudes.ui.settings.SettingsFragment"
         android:label="@string/title_settings"
         tools:layout="@layout/fragment_settings" />

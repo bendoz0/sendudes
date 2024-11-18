@@ -5,7 +5,13 @@ import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_NOT_RECEIVING;
 import static it.startup.sendudes.utils.IConstants.MULTICAST_ADDRESS;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
+import static it.startup.sendudes.utils.TCP_NetworkUtils.getAcceptedData;
+import static it.startup.sendudes.utils.TCP_NetworkUtils.getConnectedClient;
+import static it.startup.sendudes.utils.TCP_NetworkUtils.hasData;
+import static it.startup.sendudes.utils.TCP_NetworkUtils.setActionOnClientConnect;
+import static it.startup.sendudes.utils.TCP_NetworkUtils.setActionOnClientDisconnect;
 import static it.startup.sendudes.utils.TCP_NetworkUtils.startServerConnection;
+import static it.startup.sendudes.utils.TCP_NetworkUtils.userDecision;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcast;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcastHandshake;
 
@@ -34,7 +40,7 @@ public class ReceiveFragment extends Fragment {
     private DatagramSocket socket;
     private MulticastSocket listenerSocket;
     private Thread broadcastReplierThread;
-
+    private Thread tcpSeverStarterThread;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentReceiveBinding.inflate(inflater, container, false);
@@ -45,6 +51,9 @@ public class ReceiveFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        binding.btnAcceptData.setEnabled(false);
+        binding.btnRejectData.setEnabled(false);
+
         try {
             socket = new DatagramSocket(RECEIVE_PORT);
             listenerSocket = new MulticastSocket(PING_PORT);
@@ -55,8 +64,39 @@ public class ReceiveFragment extends Fragment {
         }
         broadcastReplier();
         startServer();
+
         Log.d("MESSAGE: ", "STARTED SUCCESSFULLY: " + socket.isClosed());
 
+    }
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        setActionOnClientConnect(()->{
+                requireActivity().runOnUiThread(() -> {
+                    binding.btnAcceptData.setEnabled(true);
+                    binding.btnRejectData.setEnabled(true);
+                });
+            binding.receiveTtile.setText(getConnectedClient());
+        });
+
+        setActionOnClientDisconnect(() -> {
+            requireActivity().runOnUiThread(() -> {
+                binding.btnAcceptData.setEnabled(false);
+                binding.btnRejectData.setEnabled(false);
+            });
+
+            binding.receiveTtile.setText("User Disconnected");
+        });
+
+        binding.btnRejectData.setOnClickListener(v -> {
+            userDecision("reject");
+        });
+        binding.btnAcceptData.setOnClickListener(v -> {
+            userDecision("accept");
+            binding.receivedData.setText(getAcceptedData());
+        });
     }
 
     @Override
@@ -65,12 +105,21 @@ public class ReceiveFragment extends Fragment {
         broadcast(socket, MSG_CLIENT_NOT_RECEIVING);
         if (broadcastReplierThread != null && broadcastReplierThread.isAlive())
             broadcastReplierThread.interrupt();
+        if (tcpSeverStarterThread != null && tcpSeverStarterThread.isAlive())
+            tcpSeverStarterThread.interrupt();
         if (!socket.isClosed()) socket.close();
         if (!listenerSocket.isClosed()) listenerSocket.close();
         Log.d("MESSAGE: ", "CLOSED SUCCESSFULLY: " + socket.isClosed());
     }
+
     private void startServer() {
-        new Thread(() -> startServerConnection(FILE_TRANSFER_PORT)).start();
+        tcpSeverStarterThread = new Thread(() -> {
+            startServerConnection(FILE_TRANSFER_PORT);
+
+        });
+        tcpSeverStarterThread.start();
+
+
     }
 
     private void broadcastReplier() {
