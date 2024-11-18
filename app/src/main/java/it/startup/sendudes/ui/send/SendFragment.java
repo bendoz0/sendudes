@@ -2,6 +2,7 @@ package it.startup.sendudes.ui.send;
 
 import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
 import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
+import static it.startup.sendudes.utils.IConstants.MULTICAST_ADDRESS;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.TCP_NetworkUtils.clientConnection;
@@ -55,7 +56,7 @@ public class SendFragment extends Fragment {
         try {
             socket = new DatagramSocket(PING_PORT);
             listenerSocket = new MulticastSocket(RECEIVE_PORT);
-            InetAddress group = InetAddress.getByName("224.0.0.167");
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             listenerSocket.joinGroup(group);
         } catch (SocketException e) {
             Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());

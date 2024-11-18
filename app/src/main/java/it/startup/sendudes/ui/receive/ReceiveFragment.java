@@ -2,6 +2,7 @@ package it.startup.sendudes.ui.receive;
 
 import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
 import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_NOT_RECEIVING;
+import static it.startup.sendudes.utils.IConstants.MULTICAST_ADDRESS;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.TCP_NetworkUtils.startServerConnection;
@@ -47,7 +48,7 @@ public class ReceiveFragment extends Fragment {
         try {
             socket = new DatagramSocket(RECEIVE_PORT);
             listenerSocket = new MulticastSocket(PING_PORT);
-            InetAddress group = InetAddress.getByName("224.0.0.167");
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             listenerSocket.joinGroup(group);
         } catch (IOException e) {
             throw new RuntimeException(e);
