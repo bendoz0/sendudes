@@ -3,6 +3,7 @@ package it.startup.sendudes.utils;
 import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_NOT_RECEIVING;
 import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
 import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_RECEIVING;
+import static it.startup.sendudes.utils.IConstants.MULTICAST_ADDRESS;
 
 import android.util.Log;
 
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
@@ -24,7 +26,7 @@ public class UDP_NetworkUtils {
         try {
             socket.setBroadcast(true);
             byte[] buffer = !message.isEmpty() ? message.getBytes() : ("HELLO FROM: " + getMyIP()).getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName("255.255.255.255"), socket.getLocalPort());
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(MULTICAST_ADDRESS), socket.getLocalPort());
             socket.send(packet);
             Log.d("BROADCAST", "BROADCASTED MSG: " + message + " PORT: " + socket.getLocalPort());
         } catch (IOException e) {
@@ -82,11 +84,10 @@ public class UDP_NetworkUtils {
         return "Cant find IP";
     }
 
-    public static void broadcastHandshake(DatagramSocket socket, DatagramSocket listenerSocket) {
+    public static void broadcastHandshake(DatagramSocket socket, MulticastSocket listenerSocket) {
         try {
             byte[] buffer = new byte[2048];
-
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(MULTICAST_ADDRESS), socket.getLocalPort());
 
             while (true) {
                 listenerSocket.receive(packet);

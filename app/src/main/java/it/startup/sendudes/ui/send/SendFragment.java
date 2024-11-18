@@ -24,7 +24,10 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import java.io.IOException;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.util.Map;
 
@@ -37,7 +40,7 @@ public class SendFragment extends Fragment {
     private Thread broadcastHandshakeThread;
     private Thread tcpClientThread;
     private DatagramSocket socket;
-    private DatagramSocket listenerSocket;
+    private MulticastSocket listenerSocket;
     Map.Entry<String, String> entry;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -51,9 +54,13 @@ public class SendFragment extends Fragment {
         super.onStart();
         try {
             socket = new DatagramSocket(PING_PORT);
-            listenerSocket = new DatagramSocket(RECEIVE_PORT);
+            listenerSocket = new MulticastSocket(RECEIVE_PORT);
+            InetAddress group = InetAddress.getByName("224.0.0.167");
+            listenerSocket.joinGroup(group);
         } catch (SocketException e) {
             Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
 

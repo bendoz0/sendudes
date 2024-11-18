@@ -18,8 +18,12 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 
+import java.io.IOException;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 
 import it.startup.sendudes.databinding.FragmentReceiveBinding;
 
@@ -27,7 +31,7 @@ public class ReceiveFragment extends Fragment {
 
     private FragmentReceiveBinding binding;
     private DatagramSocket socket;
-    private DatagramSocket listenerSocket;
+    private MulticastSocket listenerSocket;
     private Thread broadcastReplierThread;
 
 
@@ -42,8 +46,10 @@ public class ReceiveFragment extends Fragment {
         super.onStart();
         try {
             socket = new DatagramSocket(RECEIVE_PORT);
-            listenerSocket = new DatagramSocket(PING_PORT);
-        } catch (SocketException e) {
+            listenerSocket = new MulticastSocket(PING_PORT);
+            InetAddress group = InetAddress.getByName("224.0.0.167");
+            listenerSocket.joinGroup(group);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
         broadcastReplier();
