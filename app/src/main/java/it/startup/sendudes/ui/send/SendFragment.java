@@ -25,6 +25,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -32,8 +33,8 @@ import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.util.Map;
 
-
 import it.startup.sendudes.databinding.FragmentSendBinding;
+import it.startup.sendudes.utils.UriToPath;
 
 public class SendFragment extends Fragment {
     //FragmentHomeBinding is a class generated automatically when View Binding is enabled (in the android v8 and later on ig)
@@ -163,9 +164,18 @@ public class SendFragment extends Fragment {
     //metodo che viene eseguito quando viene selezionato un file
     private void onFileChosen(Uri fileUri) {
         // Aggiorna la TextView con il percorso del file scelto
-        binding.fileChosen.setText("File scelto: " + fileUri.toString());
+        String absolutePath = UriToPath.getPathFromUri(getContext(), fileUri);
+        File file = getActualFile(absolutePath);
+        binding.fileChosen.setText("File scelto: " + file.toString());
     }
 
+    private File getActualFile(String path){
+        if (!path.isBlank()){
+            File file = new File(path);
+            return file;
+        }
+        return null;
+    }
 
     @Override
     public void onDestroyView() {
