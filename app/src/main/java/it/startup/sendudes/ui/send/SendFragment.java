@@ -5,11 +5,11 @@ import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
 import static it.startup.sendudes.utils.IConstants.MULTICAST_ADDRESS;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
-import static it.startup.sendudes.utils.TCP_NetworkUtils.clientConnection;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcast;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcastHandshake;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.getFoundIps;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.getMyIP;
+import static it.startup.sendudes.utils.file_transfer_utils.TCP_Client.clientConnection;
 
 import android.content.Intent;
 import android.net.Uri;

@@ -5,13 +5,12 @@ import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_NOT_RECEIVING;
 import static it.startup.sendudes.utils.IConstants.MULTICAST_ADDRESS;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
-import static it.startup.sendudes.utils.TCP_NetworkUtils.getAcceptedData;
-import static it.startup.sendudes.utils.TCP_NetworkUtils.getConnectedClient;
-import static it.startup.sendudes.utils.TCP_NetworkUtils.hasData;
-import static it.startup.sendudes.utils.TCP_NetworkUtils.setActionOnClientConnect;
-import static it.startup.sendudes.utils.TCP_NetworkUtils.setActionOnClientDisconnect;
-import static it.startup.sendudes.utils.TCP_NetworkUtils.startServerConnection;
-import static it.startup.sendudes.utils.TCP_NetworkUtils.userDecision;
+import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.getAcceptedData;
+import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.getConnectedClient;
+import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.setActionOnClientConnect;
+import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.setActionOnClientDisconnect;
+import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.startServerConnection;
+import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.userDecision;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcast;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcastHandshake;
 
@@ -29,8 +28,6 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 
 import it.startup.sendudes.databinding.FragmentReceiveBinding;
 

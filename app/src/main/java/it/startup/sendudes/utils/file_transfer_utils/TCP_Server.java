@@ -1,4 +1,4 @@
-package it.startup.sendudes.utils;
+package it.startup.sendudes.utils.file_transfer_utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,9 +7,10 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class TCP_NetworkUtils {
+import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientConnected;
+import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientDisconnect;
 
-    private static boolean hasAccepted;
+public class TCP_Server {
     private static String acceptedData;
     private static Socket clientSocket;
     private static ServerSocket serverSocket = null;
@@ -29,9 +30,8 @@ public class TCP_NetworkUtils {
             clientSocket = serverSocket.accept();
             System.out.println("Client connected!");
             connectedClient = clientSocket.getInetAddress().toString();
-            if (actionOnClientConnect != null) {
-                actionOnClientConnect.onConnected();
-            }
+            if (actionOnClientConnect != null) actionOnClientConnect.onConnected();
+
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             out = new PrintWriter(clientSocket.getOutputStream(), true);
 
@@ -39,12 +39,6 @@ public class TCP_NetworkUtils {
             if (message != null) {
                 hasData = true;
                 acceptedData = message;
-
-//                if (hasAccepted) {
-//                    out.println("User accepted file.");
-//                } else {
-//                    out.println("User rejected file.");
-//                }
             }
 
         } catch (Exception e) {
@@ -67,7 +61,7 @@ public class TCP_NetworkUtils {
         decisionThread = new Thread(() -> {
             try {
                 out.println(msg);
-                if (msg.equals("accept")) hasAccepted=true;
+                //Check data sent by client
                 clientSocket.close();
                 serverSocket.close();
             } catch (IOException e) {
@@ -83,28 +77,6 @@ public class TCP_NetworkUtils {
         }
     }
 
-
-
-    public static void clientConnection(String IP, int port) {
-        Socket socket = null;
-        try {
-            socket = new Socket(IP, port);
-
-
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            out.println("Hello from client!");
-
-            String response = in.readLine();
-            System.out.println("Server says: " + response);
-
-            socket.close();
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-        }
-    }
 
     public static String getAcceptedData() {
         return acceptedData;
