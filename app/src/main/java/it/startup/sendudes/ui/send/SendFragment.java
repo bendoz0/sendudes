@@ -36,6 +36,8 @@ import androidx.fragment.app.Fragment;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -173,7 +175,7 @@ public class SendFragment extends Fragment {
     }
 
     /*
-     * "filePickerLauncher" variabile di tipo ActivityResultLauncher<Intent>per gestire un intento
+     * "filePickerLauncher" è un oggetto di tipo ActivityResultLauncher<Intent>per gestire un intento
      * "registerForActivityResult" è un metodo che crea un oggetto "result" passandogli una attività da eseguire con un intent
      * "result.getResultCode()" questo contine un valore per indicare se è andato a buon fine o meno (1-RESULT_OK oppure 2-RESULT_CENCELED)
      * "getData()" contiene l'intent usato e il file se è stato selezionato
