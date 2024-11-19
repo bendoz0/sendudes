@@ -1,4 +1,4 @@
-package it.startup.sendudes.utils;
+package it.startup.sendudes.utils.network_discovery;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;

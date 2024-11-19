@@ -5,7 +5,7 @@ import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.IConstants.REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE;
-import static it.startup.sendudes.utils.NetworkUtils.getMyIP;
+import static it.startup.sendudes.utils.network_discovery.NetworkUtils.getMyIP;
 import static it.startup.sendudes.utils.file_transfer_utils.TCP_Client.clientConnection;
 
 import android.Manifest;
@@ -36,7 +36,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import it.startup.sendudes.databinding.FragmentSendBinding;
-import it.startup.sendudes.utils.UDP_NetworkUtils;
+import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
 import it.startup.sendudes.utils.UriToPath;
 
 public class SendFragment extends Fragment {
@@ -71,6 +71,16 @@ public class SendFragment extends Fragment {
         binding.btnNetworkScanner.setOnClickListener(v -> {
             onClickScanNetwork();
         });
+        udpHandler.onListUpdate((foudIps) -> {
+            if (foudIps.isEmpty()) {
+                binding.foundIps.setText("No user found");
+            } else {
+                binding.foundIps.setText(foudIps.toString());
+                entry = foudIps.entrySet().iterator().next();
+                binding.btnSend.setEnabled(true);
+            }
+        });
+
         broadcastHandshaker();
         binding.btnSend.setOnClickListener(l -> {
             if (binding.btnSend.isEnabled()) {
@@ -104,17 +114,10 @@ public class SendFragment extends Fragment {
         });
         tcpClientThread.start();
     }
-    public void onClickScanNetwork(){
-        udpHandler.broadcast(MSG_CLIENT_PING);
-        if (udpHandler.getFoundIps().isPresent()) {
-            binding.foundIps.setText(udpHandler.getFoundIps().get().toString());
-            entry = udpHandler.getFoundIps().get().entrySet().iterator().next();
-            binding.btnSend.setEnabled(true);
-        } else {
-            binding.foundIps.setText("No user found");
-        }
-    }
 
+    public void onClickScanNetwork() {
+        udpHandler.broadcast(MSG_CLIENT_PING);
+    }
 
     private void onClickGetIp() {
 //       got em 2 ways to access em ui elements usin java, the one right below this line basically uses a traditional way to access the ui elements, and this way doesn't provide type safety, on the other hand the viewModel way does cuz it's binded to the fragment.

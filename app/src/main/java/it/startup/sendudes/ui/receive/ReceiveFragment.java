@@ -2,7 +2,6 @@ package it.startup.sendudes.ui.receive;
 
 import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
 import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_NOT_RECEIVING;
-import static it.startup.sendudes.utils.IConstants.MULTICAST_ADDRESS;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.getAcceptedData;
@@ -25,7 +24,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 import it.startup.sendudes.databinding.FragmentReceiveBinding;
-import it.startup.sendudes.utils.UDP_NetworkUtils;
+import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
 
 public class ReceiveFragment extends Fragment {
     private FragmentReceiveBinding binding;
