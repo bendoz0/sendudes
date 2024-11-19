@@ -2,13 +2,9 @@ package it.startup.sendudes.ui.send;
 
 import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
 import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
-import static it.startup.sendudes.utils.IConstants.MULTICAST_ADDRESS;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.IConstants.REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE;
-import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcast;
-import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcastHandshake;
-import static it.startup.sendudes.utils.UDP_NetworkUtils.getFoundIps;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.getMyIP;
 import static it.startup.sendudes.utils.file_transfer_utils.TCP_Client.clientConnection;
 
@@ -36,16 +32,11 @@ import androidx.fragment.app.Fragment;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.net.SocketException;
 import java.util.Map;
 
 import it.startup.sendudes.databinding.FragmentSendBinding;
+import it.startup.sendudes.utils.UDP_NetworkUtils;
 import it.startup.sendudes.utils.UriToPath;
 
 public class SendFragment extends Fragment {
@@ -53,15 +44,13 @@ public class SendFragment extends Fragment {
     private FragmentSendBinding binding;
     private Thread broadcastHandshakeThread;
     private Thread tcpClientThread;
-    private DatagramSocket socket;
-    private MulticastSocket listenerSocket;
+    private UDP_NetworkUtils udpHandler;
     private boolean permissionsGranted = false; // Flag to track permissions
     private Map.Entry<String, String> entry;
     private String fileName;
     private long fileSize = 0;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
         binding = FragmentSendBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -70,38 +59,40 @@ public class SendFragment extends Fragment {
     public void onStart() {
         super.onStart();
         try {
-            socket = new DatagramSocket(PING_PORT);
-            listenerSocket = new MulticastSocket(RECEIVE_PORT);
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            listenerSocket.joinGroup(group);
-        } catch (SocketException e) {
-            Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
+            udpHandler = new UDP_NetworkUtils(RECEIVE_PORT, PING_PORT);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
         }
-
 
         binding.btnSend.setEnabled(false);
         binding.btnGetIp.setOnClickListener(v -> onClickGetIp());
         binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
+
         binding.btnNetworkScanner.setOnClickListener(v -> {
-            broadcast(socket, MSG_CLIENT_PING);
-            if (getFoundIps().isPresent()) {
-                binding.foundIps.setText((String) getFoundIps().get().toString());
-                entry = getFoundIps().get().entrySet().iterator().next();
-                binding.btnSend.setEnabled(true);
-            } else binding.foundIps.setText("No user found");
+            onClickScanNetwork();
         });
-        broadcastHandshaker(listenerSocket);
+        broadcastHandshaker();
         binding.btnSend.setOnClickListener(l -> {
             if (binding.btnSend.isEnabled()) {
                 System.out.println(entry.getKey());
                 TCP_clientThread(entry.getKey());
             }
         });
+    }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
+            broadcastHandshakeThread.interrupt();
+        if (tcpClientThread != null && tcpClientThread.isAlive()) tcpClientThread.interrupt();
+        udpHandler.closeSockets();
+    }
 
-        Log.d("MESSAGE: ", "STARTED SUCCESSFULLY: " + socket.isClosed());
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 
     public void TCP_clientThread(String ip) {
@@ -113,20 +104,17 @@ public class SendFragment extends Fragment {
         });
         tcpClientThread.start();
     }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
-            broadcastHandshakeThread.interrupt();
-        if (tcpClientThread != null && tcpClientThread.isAlive())
-            tcpClientThread.interrupt();
-        if (!socket.isClosed()) socket.close();
-        if (!listenerSocket.isClosed()) listenerSocket.close();
-
-        Log.d("MESSAGE: ", "CLOSED SUCCESSFULLY: " + socket.isClosed());
-
+    public void onClickScanNetwork(){
+        udpHandler.broadcast(MSG_CLIENT_PING);
+        if (udpHandler.getFoundIps().isPresent()) {
+            binding.foundIps.setText(udpHandler.getFoundIps().get().toString());
+            entry = udpHandler.getFoundIps().get().entrySet().iterator().next();
+            binding.btnSend.setEnabled(true);
+        } else {
+            binding.foundIps.setText("No user found");
+        }
     }
+
 
     private void onClickGetIp() {
 //       got em 2 ways to access em ui elements usin java, the one right below this line basically uses a traditional way to access the ui elements, and this way doesn't provide type safety, on the other hand the viewModel way does cuz it's binded to the fragment.
@@ -134,10 +122,10 @@ public class SendFragment extends Fragment {
         binding.twUserIp.setText(getMyIP());
     }
 
-    private void broadcastHandshaker(DatagramSocket socket) {
+    private void broadcastHandshaker() {
         broadcastHandshakeThread = new Thread(() -> {
             try {
-                broadcastHandshake(socket, listenerSocket);
+                udpHandler.startBroadcastHandshakeListener();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
@@ -264,18 +252,11 @@ public class SendFragment extends Fragment {
         }
     }
 
-
     private File getActualFile(String path) {
         if (!path.isBlank()) {
             File file = new File(path);
             return file;
         }
         return null;
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
     }
 }

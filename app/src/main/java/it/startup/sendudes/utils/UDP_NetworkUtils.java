@@ -19,23 +19,34 @@ import java.util.HashMap;
 import java.util.Optional;
 
 public class UDP_NetworkUtils {
+    private final DatagramSocket sendSocket;
+    private final MulticastSocket listenerSocket;
+    private final HashMap<String, String> foundIps = new HashMap<>();
 
-    private static final HashMap<String, String> foundIps = new HashMap<>();
+    public UDP_NetworkUtils(int sendSocketPort, int listenerSocketPort) throws IOException {
 
-    public static void tryBroadcast(DatagramSocket socket, String message) {
+        this.sendSocket = new DatagramSocket(sendSocketPort);
+//        sendSocket.joinGroup(group);
+
+        this.listenerSocket = new MulticastSocket(listenerSocketPort);
+        InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+        listenerSocket.joinGroup(group);
+    }
+
+    public void tryBroadcast(String message) {
         try {
-            socket.setBroadcast(true);
+            sendSocket.setBroadcast(true);
             byte[] buffer = !message.isEmpty() ? message.getBytes() : ("HELLO FROM: " + getMyIP()).getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(MULTICAST_ADDRESS), socket.getLocalPort());
-            socket.send(packet);
-            Log.d("BROADCAST", "BROADCASTED MSG: " + message + " PORT: " + socket.getLocalPort());
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(MULTICAST_ADDRESS), sendSocket.getLocalPort());
+            sendSocket.send(packet);
+            Log.d("BROADCAST", "BROADCASTED MSG: " + message);
         } catch (IOException e) {
             Log.d("BROADCAST ERROR", e.getMessage() == null ? "receiver socket is null" : "receiver " + e.getMessage());
         }
     }
 
-    public static void broadcast(DatagramSocket socket, String message) {
-        Thread x = new Thread(() -> tryBroadcast(socket, message));
+    public void broadcast(String message) {
+        Thread x = new Thread(() -> tryBroadcast(message));
         x.start();
         try {
             x.join();
@@ -43,7 +54,6 @@ public class UDP_NetworkUtils {
             throw new RuntimeException(e);
         }
     }
-
 
     public static String getMyIP() {
         try {
@@ -84,17 +94,16 @@ public class UDP_NetworkUtils {
         return "Cant find IP";
     }
 
-    public static void broadcastHandshake(DatagramSocket socket, MulticastSocket listenerSocket) {
+    public void startBroadcastHandshakeListener() {
         try {
             byte[] buffer = new byte[2048];
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(MULTICAST_ADDRESS), socket.getLocalPort());
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(MULTICAST_ADDRESS), listenerSocket.getLocalPort());
 
             while (true) {
                 listenerSocket.receive(packet);
-
                 String msg = new String(buffer, 0, packet.getLength());
                 Log.d("RECEIVE: ", packet.getAddress().getHostName() + ": " + msg);
-                handleReceivedPacket(packet, socket);
+                handleReceivedPacket(packet);
                 packet.setLength(buffer.length);
             }
         } catch (Exception e) {
@@ -102,13 +111,13 @@ public class UDP_NetworkUtils {
         }
     }
 
-    public static Optional<HashMap<String, String>> getFoundIps() {
+    public Optional<HashMap<String, String>> getFoundIps() {
         if (!foundIps.isEmpty()) return Optional.of(foundIps);
         return Optional.empty();
     }
 
     // TODO: MAKE USER REMOVER EFFICIENT
-    private static void handleReceivedPacket(DatagramPacket receivedPack, DatagramSocket socket) {
+    private void handleReceivedPacket(DatagramPacket receivedPack) {
         String ip = receivedPack.getAddress().getHostAddress();
         if (ip == null) {
             return;
@@ -118,7 +127,7 @@ public class UDP_NetworkUtils {
 
         switch (msg) {
             case MSG_CLIENT_PING:
-                broadcast(socket, MSG_CLIENT_RECEIVING);
+                broadcast(MSG_CLIENT_RECEIVING);
                 break;
             case MSG_CLIENT_NOT_RECEIVING:
                 foundIps.remove(ip);
@@ -131,6 +140,9 @@ public class UDP_NetworkUtils {
                 break;
         }
     }
-
+    public void closeSockets(){
+        sendSocket.close();
+        listenerSocket.close();
+    }
 
 }
