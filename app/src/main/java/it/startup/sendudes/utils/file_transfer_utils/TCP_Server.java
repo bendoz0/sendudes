@@ -23,29 +23,31 @@ public class TCP_Server {
     private static OnClientConnected actionOnClientConnect;
     private static OnClientDisconnect actionOnClientDisconnect;
 
-    public static void startServerConnection(int port) {
-        try {
-            serverSocket = new ServerSocket(port);
-            System.out.println("Server is running and waiting for client connection...");
+    public static void startServerConnection(ServerSocket serverSocket) {
+        while (!serverSocket.isClosed()) {
+            try {
+//                serverSocket = new ServerSocket(port);
+                System.out.println("Server is running and waiting for client connection...");
 
-            clientSocket = serverSocket.accept();
-            System.out.println("Client connected!");
-            connectedClient = clientSocket.getInetAddress().toString();
-            if (actionOnClientConnect != null) actionOnClientConnect.onConnected();
+                clientSocket = serverSocket.accept();
+                System.out.println("Client connected!");
+                connectedClient = clientSocket.getInetAddress().toString();
+                if (actionOnClientConnect != null) actionOnClientConnect.onConnected();
 
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            out = new PrintWriter(clientSocket.getOutputStream(), true);
+                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            String receivedTransferProperties = in.readLine();
-            if (receivedTransferProperties != null && !receivedTransferProperties.isEmpty()) {
-                //TODO serialize receivedProperties to type FileTransferPacket
-                Log.d("Server", "File transfer properties: " + receivedTransferProperties);
-                acceptedData = receivedTransferProperties;
-            } else {
-                closeConnections();
+                String receivedTransferProperties = in.readLine();
+                if (receivedTransferProperties != null && !receivedTransferProperties.isEmpty()) {
+                    //TODO serialize receivedProperties to type FileTransferPacket
+                    Log.d("Server", "File transfer properties: " + receivedTransferProperties);
+                    acceptedData = receivedTransferProperties;
+                } else {
+                    closeConnections();
+                }
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
             }
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
         }
     }
 
@@ -78,7 +80,7 @@ public class TCP_Server {
     public static void closeConnections() {
         try {
             clientSocket.close();
-            serverSocket.close();
+//            serverSocket.close();
             actionOnClientDisconnect.onDisconnected();
         } catch (IOException e) {
             throw new RuntimeException(e);
