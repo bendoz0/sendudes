@@ -1,6 +1,7 @@
 package it.startup.sendudes.utils;
 
 public interface IConstants {
+    public static final int REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE = 1;
     int PING_PORT = 8000;
     int RECEIVE_PORT = 8001;
     int FILE_TRANSFER_PORT = 8002;
