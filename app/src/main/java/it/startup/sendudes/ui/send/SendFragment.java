@@ -5,15 +5,21 @@ import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
 import static it.startup.sendudes.utils.IConstants.MULTICAST_ADDRESS;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
+import static it.startup.sendudes.utils.IConstants.REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcast;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.broadcastHandshake;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.getFoundIps;
 import static it.startup.sendudes.utils.UDP_NetworkUtils.getMyIP;
 import static it.startup.sendudes.utils.file_transfer_utils.TCP_Client.clientConnection;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,9 +29,12 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -43,6 +52,7 @@ public class SendFragment extends Fragment {
     private Thread tcpClientThread;
     private DatagramSocket socket;
     private MulticastSocket listenerSocket;
+    private boolean permissionsGranted = false; // Flag to track permissions
     Map.Entry<String, String> entry;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -130,6 +140,23 @@ public class SendFragment extends Fragment {
 
     //Metodo per gestire il Btn "Choose File"
     private void onClickChooseFile() {
+        // check se permessi sono abilitati, se no chiede di attivarli
+            if (!checkPerms()) {
+                askPerms();
+            } else {
+                chooseFile();
+            }
+    }
+
+    private boolean checkPerms(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return Environment.isExternalStorageManager();
+        } else {
+            return permissionsGranted;
+        }
+    }
+
+    private void chooseFile(){
         //intent è un oggetto che permeate di avviare il file picker di android per scegliere un file
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         /*
@@ -166,11 +193,64 @@ public class SendFragment extends Fragment {
         // Aggiorna la TextView con il percorso del file scelto
         String absolutePath = UriToPath.getPathFromUri(getContext(), fileUri);
         File file = getActualFile(absolutePath);
-        binding.fileChosen.setText("File scelto: " + file.toString());
+        if (!file.exists()) {
+            Log.e("FileError", "File does not exist at the specified path: " + absolutePath);
+            return;
+        }
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            byte[] buffer = new byte[(int) file.length()];
+            fis.read(buffer);
+            fis.close();
+            String fileData = new String(buffer);
+            binding.fileChosen.setText("File scelto: " + fileData);
+            Log.d("TEST BYTE", fileData);
+        } catch (Exception e) {
+            binding.fileChosen.setText("File scelto " + e.getMessage());
+        }
     }
 
-    private File getActualFile(String path){
-        if (!path.isBlank()){
+    public void askPerms() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                Uri uri = Uri.fromParts("package", getActivity().getPackageName(), null);
+                intent.setData(uri);
+                startActivity(intent);
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(getActivity(),
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE:
+                if (grantResults.length > 0) {
+                    boolean readGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                    boolean writeGranted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
+
+                    // Update the permissionsGranted flag based on user response
+                    if (readGranted && writeGranted) {
+                        permissionsGranted = true; // Both permissions granted
+                    } else {
+                        permissionsGranted = false; // At least one permission denied
+                    }
+                } else {
+                    permissionsGranted = false; // No response from user
+                }
+                break;
+        }
+    }
+
+    private File getActualFile(String path) {
+        if (!path.isBlank()) {
             File file = new File(path);
             return file;
         }
