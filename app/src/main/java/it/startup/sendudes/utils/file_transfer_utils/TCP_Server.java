@@ -1,5 +1,7 @@
 package it.startup.sendudes.utils.file_transfer_utils;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -14,7 +16,6 @@ public class TCP_Server {
     private static String acceptedData;
     private static Socket clientSocket;
     private static ServerSocket serverSocket = null;
-    public static boolean hasData;
     public static BufferedReader in;
     public static PrintWriter out;
     private static Thread decisionThread;
@@ -35,12 +36,14 @@ public class TCP_Server {
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            String message = in.readLine();
-            if (message != null) {
-                hasData = true;
-                acceptedData = message;
+            String receivedTransferProperties = in.readLine();
+            if (receivedTransferProperties != null && !receivedTransferProperties.isEmpty()) {
+                //TODO serialize receivedProperties to type FileTransferPacket
+                Log.d("Server", "File transfer properties: " + receivedTransferProperties);
+                acceptedData = receivedTransferProperties;
+            } else {
+                closeConnections();
             }
-
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
@@ -49,6 +52,7 @@ public class TCP_Server {
     public static void setActionOnClientConnect(OnClientConnected x) {
         actionOnClientConnect = x;
     }
+
     public static void setActionOnClientDisconnect(OnClientDisconnect x) {
         actionOnClientDisconnect = x;
     }
@@ -59,24 +63,27 @@ public class TCP_Server {
 
     public static void userDecision(String msg) {
         decisionThread = new Thread(() -> {
-            try {
-                out.println(msg);
-                //Check data sent by client
-                clientSocket.close();
-                serverSocket.close();
-            } catch (IOException e) {
-                System.err.println(e.getMessage());
-            }
+            out.println(msg);
+            //TODO: Receive file
         });
         decisionThread.start();
         try {
             decisionThread.join();
-            actionOnClientDisconnect.onDisconnected();
+            closeConnections();
         } catch (InterruptedException e) {
             System.err.println(e.getMessage());
         }
     }
 
+    public static void closeConnections() {
+        try {
+            clientSocket.close();
+            serverSocket.close();
+            actionOnClientDisconnect.onDisconnected();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static String getAcceptedData() {
         return acceptedData;
