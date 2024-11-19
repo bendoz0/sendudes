@@ -5,7 +5,7 @@ import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.IConstants.REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE;
-import static it.startup.sendudes.utils.UDP_NetworkUtils.getMyIP;
+import static it.startup.sendudes.utils.NetworkUtils.getMyIP;
 import static it.startup.sendudes.utils.file_transfer_utils.TCP_Client.clientConnection;
 
 import android.Manifest;
