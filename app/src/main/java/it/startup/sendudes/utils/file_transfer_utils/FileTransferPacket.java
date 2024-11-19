@@ -3,9 +3,9 @@ package it.startup.sendudes.utils.file_transfer_utils;
 public class FileTransferPacket {
     private String userName;
     private String fileName;
-    private Double fileSize;
+    private long fileSize;
 
-    public FileTransferPacket(String userName, String fileName, Double fileSize) {
+    public FileTransferPacket(String userName, String fileName, long fileSize) {
         this.userName = userName;
         this.fileName = fileName;
         this.fileSize = fileSize;
