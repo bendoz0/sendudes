@@ -79,6 +79,7 @@ public class ReceiveFragment extends Fragment {
             requireActivity().runOnUiThread(() -> {
                 binding.btnAcceptData.setEnabled(true);
                 binding.btnRejectData.setEnabled(true);
+                binding.receivedData.setText(getAcceptedData());
             });
             binding.receiveTtile.setText(getConnectedClient());
         });
@@ -97,7 +98,7 @@ public class ReceiveFragment extends Fragment {
         });
         binding.btnAcceptData.setOnClickListener(v -> {
             userDecision("accept");
-            binding.receivedData.setText(getAcceptedData());
+            Log.d("FILE ACCEPTED", "FILE CONTAINS: "+ binding.receivedData.getText());
         });
     }
 
