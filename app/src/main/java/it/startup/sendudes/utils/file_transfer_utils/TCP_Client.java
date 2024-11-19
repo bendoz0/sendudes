@@ -9,7 +9,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 public class TCP_Client {
-    public static void clientConnection(String IP, int port) {
+    public static void clientConnection(String IP, int port, String fileName, long fileSize) {
         Socket socket = null;
         try {
             socket = new Socket(IP, port);
@@ -18,7 +18,7 @@ public class TCP_Client {
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            FileTransferPacket data = new FileTransferPacket("TEST","ciao.txt",1000.0);
+            FileTransferPacket data = new FileTransferPacket("TEST", fileName, fileSize);
             out.println(data.toJson());
 
             String response = in.readLine();

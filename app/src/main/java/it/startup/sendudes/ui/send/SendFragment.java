@@ -56,7 +56,9 @@ public class SendFragment extends Fragment {
     private DatagramSocket socket;
     private MulticastSocket listenerSocket;
     private boolean permissionsGranted = false; // Flag to track permissions
-    Map.Entry<String, String> entry;
+    private Map.Entry<String, String> entry;
+    private String fileName;
+    private long fileSize = 0;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
@@ -104,7 +106,10 @@ public class SendFragment extends Fragment {
 
     public void TCP_clientThread(String ip) {
         tcpClientThread = new Thread(() -> {
-            clientConnection(ip, FILE_TRANSFER_PORT);
+            if (fileName != null && !fileName.isEmpty()) {
+                if (fileSize > 0)
+                    clientConnection(ip, FILE_TRANSFER_PORT, fileName, fileSize);
+            }
         });
         tcpClientThread.start();
     }
@@ -144,14 +149,14 @@ public class SendFragment extends Fragment {
     //Metodo per gestire il Btn "Choose File"
     private void onClickChooseFile() {
         // check se permessi sono abilitati, se no chiede di attivarli
-            if (!checkPerms()) {
-                askPerms();
-            } else {
-                chooseFile();
-            }
+        if (!checkPerms()) {
+            askPerms();
+        } else {
+            chooseFile();
+        }
     }
 
-    private boolean checkPerms(){
+    private boolean checkPerms() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             return Environment.isExternalStorageManager();
         } else {
@@ -159,7 +164,7 @@ public class SendFragment extends Fragment {
         }
     }
 
-    private void chooseFile(){
+    private void chooseFile() {
         //intent è un oggetto che permeate di avviare il file picker di android per scegliere un file
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         /*
@@ -201,11 +206,13 @@ public class SendFragment extends Fragment {
             return;
         } else {
             try {
+                fileSize = file.length();
+                fileName = file.getName();
                 BufferedInputStream fiS = new BufferedInputStream(new FileInputStream(file));
                 byte[] buffer = new byte[1024];
                 int bytesRead = 0;
                 Integer count = 0;
-                while ((bytesRead = fiS.read(buffer)) != -1){
+                while ((bytesRead = fiS.read(buffer)) != -1) {
 //                    Log.d("BYTE READ", buffer.toString());
                     count++;
                 }
@@ -256,6 +263,7 @@ public class SendFragment extends Fragment {
                 break;
         }
     }
+
 
     private File getActualFile(String path) {
         if (!path.isBlank()) {
