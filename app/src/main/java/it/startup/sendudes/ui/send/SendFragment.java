@@ -33,6 +33,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -196,17 +197,23 @@ public class SendFragment extends Fragment {
         if (!file.exists()) {
             Log.e("FileError", "File does not exist at the specified path: " + absolutePath);
             return;
-        }
-        try {
-            FileInputStream fis = new FileInputStream(file);
-            byte[] buffer = new byte[(int) file.length()];
-            fis.read(buffer);
-            fis.close();
-            String fileData = new String(buffer);
-            binding.fileChosen.setText("File scelto: " + fileData);
-            Log.d("TEST BYTE", fileData);
-        } catch (Exception e) {
-            binding.fileChosen.setText("File scelto " + e.getMessage());
+        } else {
+            try {
+                BufferedInputStream fiS = new BufferedInputStream(new FileInputStream(file));
+                byte[] buffer = new byte[1024];
+                int bytesRead = 0;
+                Integer count = 0;
+                while ((bytesRead = fiS.read(buffer)) != -1){
+//                    Log.d("BYTE READ", buffer.toString());
+                    count++;
+                }
+                Log.d("BYTES READ", count.toString());
+                fiS.close();
+//                String fileData = new String(buffer);
+                binding.fileChosen.setText("File scelto: " + absolutePath);
+            } catch (Exception e) {
+                binding.fileChosen.setText("File scelto " + e.getMessage());
+            }
         }
     }
 
@@ -236,14 +243,13 @@ public class SendFragment extends Fragment {
                     boolean readGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
                     boolean writeGranted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
 
-                    // Update the permissionsGranted flag based on user response
                     if (readGranted && writeGranted) {
-                        permissionsGranted = true; // Both permissions granted
+                        permissionsGranted = true; // tutte e due i perms garantiti
                     } else {
-                        permissionsGranted = false; // At least one permission denied
+                        permissionsGranted = false; // Almeno uno dei due perms non garantiti
                     }
                 } else {
-                    permissionsGranted = false; // No response from user
+                    permissionsGranted = false; // nessuna interazione dall'utente
                 }
                 break;
         }
