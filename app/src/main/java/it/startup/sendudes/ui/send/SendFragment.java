@@ -59,7 +59,7 @@ public class SendFragment extends Fragment {
     public void onStart() {
         super.onStart();
         try {
-            udpHandler = new UDP_NetworkUtils(RECEIVE_PORT, PING_PORT);
+            udpHandler = new UDP_NetworkUtils(PING_PORT,RECEIVE_PORT);
         } catch (IOException e) {
             Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
         }

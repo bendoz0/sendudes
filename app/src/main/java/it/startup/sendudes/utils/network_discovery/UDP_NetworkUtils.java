@@ -100,7 +100,7 @@ public class UDP_NetworkUtils {
                 break;
             case MSG_CLIENT_NOT_RECEIVING:
                 foundIps.remove(ip);
-                Log.d("NOT ", "handleReceivedPacket: REMOVED IP");
+                Log.d("RECEIVED PACKET", "handleReceivedPacket: REMOVED IP");
                 _triggerListUpdateEvent();
                 break;
             case MSG_CLIENT_RECEIVING:
@@ -114,8 +114,8 @@ public class UDP_NetworkUtils {
     }
 
     public void closeSockets() {
-        sendSocket.close();
         listenerSocket.close();
+        sendSocket.close();
     }
 
 }
