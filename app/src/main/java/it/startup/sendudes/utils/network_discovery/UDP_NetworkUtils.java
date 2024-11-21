@@ -1,10 +1,10 @@
-package it.startup.sendudes.utils;
+package it.startup.sendudes.utils.network_discovery;
 
 import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_NOT_RECEIVING;
 import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
 import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_RECEIVING;
 import static it.startup.sendudes.utils.IConstants.MULTICAST_ADDRESS;
-import static it.startup.sendudes.utils.NetworkUtils.getMyIP;
+import static it.startup.sendudes.utils.network_discovery.NetworkUtils.getMyIP;
 
 import android.util.Log;
 
@@ -20,11 +20,10 @@ public class UDP_NetworkUtils {
     private final DatagramSocket sendSocket;
     private final MulticastSocket listenerSocket;
     private final HashMap<String, String> foundIps = new HashMap<>();
+    private OnListUpdate actionListUpdated;
 
     public UDP_NetworkUtils(int sendSocketPort, int listenerSocketPort) throws IOException {
-
         this.sendSocket = new DatagramSocket(sendSocketPort);
-//        sendSocket.joinGroup(group);
 
         this.listenerSocket = new MulticastSocket(listenerSocketPort);
         InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
@@ -43,7 +42,7 @@ public class UDP_NetworkUtils {
         }
     }
 
-    public void broadcast(String message) {
+    public void broadcast(String message) throws RuntimeException {
         Thread x = new Thread(() -> tryBroadcast(message));
         x.start();
         try {
@@ -51,6 +50,11 @@ public class UDP_NetworkUtils {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void scanNetwork() {
+        broadcast(MSG_CLIENT_PING);
+        _triggerListUpdateEvent();
     }
 
     public void startBroadcastHandshakeListener() {
@@ -75,6 +79,16 @@ public class UDP_NetworkUtils {
         return Optional.empty();
     }
 
+    public void onListUpdate(OnListUpdate x) {
+        actionListUpdated = x;
+    }
+
+    private void _triggerListUpdateEvent() {
+        if (actionListUpdated != null) {
+            actionListUpdated.listUpdated(foundIps);
+        }
+    }
+
     // TODO: MAKE USER REMOVER EFFICIENT
     private void handleReceivedPacket(DatagramPacket receivedPack) {
         String ip = receivedPack.getAddress().getHostAddress();
@@ -87,21 +101,26 @@ public class UDP_NetworkUtils {
         switch (msg) {
             case MSG_CLIENT_PING:
                 broadcast(MSG_CLIENT_RECEIVING);
+
                 break;
             case MSG_CLIENT_NOT_RECEIVING:
                 foundIps.remove(ip);
+                Log.d("RECEIVED PACKET", "handleReceivedPacket: REMOVED IP");
+                _triggerListUpdateEvent();
                 break;
             case MSG_CLIENT_RECEIVING:
                 if (!foundIps.containsKey(ip) && !ip.contains(getMyIP())) {
                     System.out.println("ADDED NEW IP: " + ip);
                     foundIps.put(ip, hostName);
+                    _triggerListUpdateEvent();
                 }
                 break;
         }
     }
-    public void closeSockets(){
-        sendSocket.close();
+
+    public void closeSockets() {
         listenerSocket.close();
+        sendSocket.close();
     }
 
 }
