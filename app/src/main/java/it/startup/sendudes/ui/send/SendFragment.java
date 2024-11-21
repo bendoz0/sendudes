@@ -59,7 +59,7 @@ public class SendFragment extends Fragment {
     public void onStart() {
         super.onStart();
         try {
-            udpHandler = new UDP_NetworkUtils(PING_PORT,RECEIVE_PORT);
+            udpHandler = new UDP_NetworkUtils(PING_PORT, RECEIVE_PORT);
         } catch (IOException e) {
             Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
         }
@@ -69,15 +69,17 @@ public class SendFragment extends Fragment {
         binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
 
         binding.btnNetworkScanner.setOnClickListener(v -> {
-            onClickScanNetwork();
+            udpHandler.scanNetwork();
         });
         udpHandler.onListUpdate((foudIps) -> {
             if (foudIps.isEmpty()) {
-                binding.foundIps.setText("No user found");
+                requireActivity().runOnUiThread(() -> binding.foundIps.setText("No user found"));
             } else {
-                binding.foundIps.setText(foudIps.toString());
+                requireActivity().runOnUiThread(() -> {
+                    binding.foundIps.setText(foudIps.toString());
+                    binding.btnSend.setEnabled(true);
+                });
                 entry = foudIps.entrySet().iterator().next();
-                binding.btnSend.setEnabled(true);
             }
         });
 
@@ -113,10 +115,6 @@ public class SendFragment extends Fragment {
             }
         });
         tcpClientThread.start();
-    }
-
-    public void onClickScanNetwork() {
-        udpHandler.broadcast(MSG_CLIENT_PING);
     }
 
     private void onClickGetIp() {

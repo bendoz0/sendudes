@@ -42,7 +42,7 @@ public class UDP_NetworkUtils {
         }
     }
 
-    public void broadcast(String message) {
+    public void broadcast(String message) throws RuntimeException {
         Thread x = new Thread(() -> tryBroadcast(message));
         x.start();
         try {
@@ -50,6 +50,11 @@ public class UDP_NetworkUtils {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void scanNetwork() {
+        broadcast(MSG_CLIENT_PING);
+        _triggerListUpdateEvent();
     }
 
     public void startBroadcastHandshakeListener() {
