@@ -1,7 +1,6 @@
 package it.startup.sendudes.ui.send;
 
 import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
-import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.IConstants.REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE;
@@ -69,22 +68,33 @@ public class SendFragment extends Fragment {
         binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
 
         binding.btnNetworkScanner.setOnClickListener(v -> {
-            udpHandler.scanNetwork();
+            binding.btnNetworkScanner.setEnabled(false);
+
+            new Thread(() -> {
+                for (int i = 0; i < 32; i++) {
+                    udpHandler.scanNetwork();
+                }
+                binding.btnNetworkScanner.postDelayed(() -> binding.btnNetworkScanner.setEnabled(true), 4000);
+            }).start();
+
         });
-        udpHandler.onListUpdate((foudIps) -> {
-            if (foudIps.isEmpty()) {
+        udpHandler.onListUpdate((scannedIPs) ->
+        {
+            if (scannedIPs.isEmpty()) {
                 requireActivity().runOnUiThread(() -> binding.foundIps.setText("No user found"));
             } else {
                 requireActivity().runOnUiThread(() -> {
-                    binding.foundIps.setText(foudIps.toString());
+                    binding.foundIps.setText(scannedIPs.toString());
                     binding.btnSend.setEnabled(true);
                 });
-                entry = foudIps.entrySet().iterator().next();
+                entry = scannedIPs.entrySet().iterator().next();
             }
         });
 
         broadcastHandshaker();
-        binding.btnSend.setOnClickListener(l -> {
+        binding.btnSend.setOnClickListener(l ->
+
+        {
             if (binding.btnSend.isEnabled()) {
                 System.out.println(entry.getKey());
                 TCP_clientThread(entry.getKey());
