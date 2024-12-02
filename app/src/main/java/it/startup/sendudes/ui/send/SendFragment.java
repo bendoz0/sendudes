@@ -19,7 +19,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
@@ -30,13 +29,11 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
+
 import java.io.IOException;
-import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 import it.startup.sendudes.R;
@@ -54,8 +51,11 @@ public class SendFragment extends Fragment {
     private Map.Entry<String, String> entry;
     private String fileName;
     private long fileSize = 0;
-    private String selectedIp;
     private File fileToSend;
+
+     View currentlySelectedView = null;
+     String selectedIp = null;
+
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentSendBinding.inflate(inflater, container, false);
@@ -88,44 +88,64 @@ public class SendFragment extends Fragment {
         });
         udpHandler.onListUpdate((scannedIPs) ->
         {
-            if (scannedIPs.isEmpty()) {
-//                requireActivity().runOnUiThread(() -> binding.foundIps.setText("No user found"));
-                Log.d("SCANNED USERS: ", "NO USER FOUND");
-            } else {
-                requireActivity().runOnUiThread(() -> {
-                    ArrayAdapter<String> ipListContent = new ArrayAdapter<>(getContext(), android.R.layout.simple_dropdown_item_1line, new ArrayList<>(scannedIPs.keySet()));
-                    binding.foundIps.setAdapter(ipListContent);
-                    binding.btnSend.setEnabled(true);
-                    ipListContent.notifyDataSetChanged();
-                    binding.foundIps.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                        @Override
-                        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                            selectedIp = String.valueOf(adapterView.getItemAtPosition(i));
-                            adapterView.getItemAtPosition(i);
-                            for (int k = 0; k < binding.foundIps.getChildCount(); k++) {
-                                binding.foundIps.getChildAt(i).setSelected(false);
-                                binding.foundIps.getChildAt(i).setBackgroundColor(getResources().getColor(R.color.teal_200));
-                            }
+            requireActivity().runOnUiThread(() -> {
+                if (scannedIPs.isEmpty()) {
+                    binding.scannedMsg.setVisibility(View.VISIBLE);
+                    binding.foundIps.setVisibility(View.GONE);
 
-                            view.setSelected(true);
-                            view.setBackgroundColor(getResources().getColor(R.color.teal_200));
+                    Log.d("SCANNED USERS: ", "NO USER FOUND");
+                } else {
+                    binding.scannedMsg.setVisibility(View.GONE);
+                    binding.foundIps.setVisibility(View.VISIBLE);
+
+                    ArrayAdapter<String> ipListContent = getIpListAdapter(scannedIPs);
+                    binding.foundIps.setAdapter(ipListContent);
+                    binding.btnSend.setEnabled(false);
+                    ipListContent.notifyDataSetChanged();
+
+
+                    binding.foundIps.setOnItemClickListener((adapterView, view, position, id) -> {
+                        if (currentlySelectedView != null) {
+                            currentlySelectedView.setSelected(false);
+                            currentlySelectedView.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                         }
 
+                        view.setSelected(true);
+                        view.setBackgroundColor(getResources().getColor(R.color.teal_200));
+                        currentlySelectedView = view;
+                        selectedIp = (String) adapterView.getItemAtPosition(position);
+
+                        binding.btnSend.setEnabled(true);
                     });
-                });
-                entry = scannedIPs.entrySet().iterator().next();
-            }
+                }
+            });
         });
 
         broadcastHandshaker();
-        binding.btnSend.setOnClickListener(l ->
-
-        {
-            if (binding.btnSend.isEnabled()) {
+        binding.btnSend.setOnClickListener(l -> {
+            if (binding.btnSend.isEnabled() && selectedIp != null) {
                 System.out.println(selectedIp);
                 TCP_clientThread(selectedIp);
+
+                if (currentlySelectedView != null) {
+                    currentlySelectedView.setSelected(false);
+                    currentlySelectedView.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                    currentlySelectedView = null;
+                    selectedIp = null;
+                }
+
+                binding.btnSend.setEnabled(false);
             }
         });
+    }
+
+    @NonNull
+    private ArrayAdapter<String> getIpListAdapter(HashMap<String, String> scannedIPs) {
+        return new ArrayAdapter<>(
+                getContext(),
+                android.R.layout.simple_dropdown_item_1line,
+                new ArrayList<>(scannedIPs.keySet())
+        );
     }
 
     @Override
@@ -145,7 +165,7 @@ public class SendFragment extends Fragment {
 
     public void TCP_clientThread(String ip) {
         tcpClientThread = new Thread(() -> {
-            clientConnection(ip, FILE_TRANSFER_PORT,fileToSend);
+            clientConnection(ip, FILE_TRANSFER_PORT, fileToSend);
         });
         tcpClientThread.start();
     }
