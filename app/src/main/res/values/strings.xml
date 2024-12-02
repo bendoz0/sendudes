@@ -4,7 +4,8 @@
     <string name="title_receive">Receive</string>
     <string name="title_settings">History</string>
     <string name="click_test">Get IP</string>
-    <string name="click_file">Choose File</string>
+    <string name="click_file">Select File</string>
     <string name="search_devices">Search devices</string>
+    <string name="send_file">Send File</string>
 
 </resources>
