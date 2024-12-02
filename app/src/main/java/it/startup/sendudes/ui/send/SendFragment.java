@@ -29,9 +29,11 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.Socket;
 import java.util.Map;
 
 import it.startup.sendudes.databinding.FragmentSendBinding;
@@ -48,6 +50,7 @@ public class SendFragment extends Fragment {
     private Map.Entry<String, String> entry;
     private String fileName;
     private long fileSize = 0;
+    private File fileToSend;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentSendBinding.inflate(inflater, container, false);
@@ -98,6 +101,7 @@ public class SendFragment extends Fragment {
             if (binding.btnSend.isEnabled()) {
                 System.out.println(entry.getKey());
                 TCP_clientThread(entry.getKey());
+
             }
         });
     }
@@ -119,10 +123,7 @@ public class SendFragment extends Fragment {
 
     public void TCP_clientThread(String ip) {
         tcpClientThread = new Thread(() -> {
-            if (fileName != null && !fileName.isEmpty()) {
-                if (fileSize > 0)
-                    clientConnection(ip, FILE_TRANSFER_PORT, fileName, fileSize);
-            }
+            clientConnection(ip, FILE_TRANSFER_PORT,fileToSend);
         });
         tcpClientThread.start();
     }
@@ -200,28 +201,11 @@ public class SendFragment extends Fragment {
         // Aggiorna la TextView con il percorso del file scelto
         String absolutePath = UriToPath.getPathFromUri(getContext(), fileUri);
         File file = getActualFile(absolutePath);
-        if (!file.exists()) {
-            Log.e("FileError", "File does not exist at the specified path: " + absolutePath);
-            return;
+        if (file.exists()) {
+            fileToSend = file;
+            binding.fileChosen.setText("File scelto: " + absolutePath);
         } else {
-            try {
-                fileSize = file.length();
-                fileName = file.getName();
-                BufferedInputStream fiS = new BufferedInputStream(new FileInputStream(file));
-                byte[] buffer = new byte[1024];
-                int bytesRead = 0;
-                Integer count = 0;
-                while ((bytesRead = fiS.read(buffer)) != -1) {
-//                    Log.d("BYTE READ", buffer.toString());
-                    count++;
-                }
-                Log.d("BYTES READ", count.toString());
-                fiS.close();
-//                String fileData = new String(buffer);
-                binding.fileChosen.setText("File scelto: " + absolutePath);
-            } catch (Exception e) {
-                binding.fileChosen.setText("File scelto " + e.getMessage());
-            }
+            Log.e("FileError", "File does not exist at the specified path: " + absolutePath);
         }
     }
 
@@ -270,4 +254,6 @@ public class SendFragment extends Fragment {
         }
         return null;
     }
+
+
 }

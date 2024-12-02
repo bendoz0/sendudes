@@ -42,6 +42,7 @@ public class TCP_Server {
                     //TODO serialize receivedProperties to type FileTransferPacket
                     Log.d("Server", "File transfer properties: " + receivedTransferProperties);
                     acceptedData = receivedTransferProperties;
+
                 } else {
                     closeConnections();
                 }
@@ -67,6 +68,7 @@ public class TCP_Server {
         decisionThread = new Thread(() -> {
             out.println(msg);
             //TODO: Receive file
+
         });
         decisionThread.start();
         try {

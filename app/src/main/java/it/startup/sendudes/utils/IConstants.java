@@ -9,4 +9,8 @@ public interface IConstants {
     String MSG_CLIENT_NOT_RECEIVING = "NOT_RECEIVING";
     String MSG_CLIENT_PING = "PING";
     String MSG_CLIENT_RECEIVING = "RECEIVING";
+    String MSG_ACCEPT_CLIENT = "ACCEPT";
+    String MSG_REJECT_CLIENT = "REJECT";
+
+
 }

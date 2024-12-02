@@ -1,7 +1,9 @@
 package it.startup.sendudes.ui.receive;
 
 import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
+import static it.startup.sendudes.utils.IConstants.MSG_ACCEPT_CLIENT;
 import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_NOT_RECEIVING;
+import static it.startup.sendudes.utils.IConstants.MSG_REJECT_CLIENT;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.getAcceptedData;
@@ -78,10 +80,10 @@ public class ReceiveFragment extends Fragment {
         });
 
         binding.btnRejectData.setOnClickListener(v -> {
-            userDecision("reject");
+            userDecision(MSG_REJECT_CLIENT);
         });
         binding.btnAcceptData.setOnClickListener(v -> {
-            userDecision("accept");
+            userDecision(MSG_ACCEPT_CLIENT);
             Log.d("FILE ACCEPTED", "FILE CONTAINS: " + binding.receivedData.getText());
         });
     }
