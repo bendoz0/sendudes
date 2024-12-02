@@ -67,8 +67,20 @@ public class TCP_Server {
     public static void userDecision(String msg) {
         decisionThread = new Thread(() -> {
             out.println(msg);
-            //TODO: Receive file
-
+            String s = "";
+            StringBuilder complete_bytes = new StringBuilder();
+            try{
+                do{
+                    s = in.readLine();
+                    if (s != null) { // Check if the line is not null
+                        Log.d("BYTES READ", s); // Log the read line
+                        complete_bytes.append(s);
+                        out.println(complete_bytes);
+                    }
+                }while(s != null);
+            } catch (Exception e){
+                Log.d("BYTE READING ERR", "Line 73 of TCP_SERVER.JAVA\n" + e.getMessage() );
+            }
         });
         decisionThread.start();
         try {
