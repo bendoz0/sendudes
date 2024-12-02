@@ -70,7 +70,7 @@ public class UDP_NetworkUtils {
                 packet.setLength(buffer.length);
             }
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            System.err.println("UDP: " + e.getMessage());
         }
     }
 
