@@ -1,6 +1,9 @@
 package it.startup.sendudes.utils.file_transfer_utils;
 
 import static it.startup.sendudes.utils.IConstants.MSG_ACCEPT_CLIENT;
+import static it.startup.sendudes.utils.IConstants.MSG_BUSY_CLIENT;
+
+import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -12,13 +15,21 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnConnectionBusy;
+
 public class TCP_Client {
-    public static void clientConnection(String IP, int port, File fileToSend ) {
+    private static OnConnectionBusy connectionBusyEvent;
+
+    public static void setConnectionBusyEvent(OnConnectionBusy connectionBusyEvent) {
+        TCP_Client.connectionBusyEvent = connectionBusyEvent;
+    }
+
+    public static void clientConnection(String IP, int port, File fileToSend) {
         Socket socket = null;
         String fileName = fileToSend.getName();
         long fileSize = fileToSend.length();
 
-        if(fileName != null && !fileName.isEmpty() && fileSize > 0){
+        if (fileName != null && !fileName.isEmpty() && fileSize > 0) {
             try {
                 socket = new Socket(IP, port);
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
@@ -31,7 +42,7 @@ public class TCP_Client {
                 System.out.println("Server says: " + response);
 
                 //Condizione che viene eseguita quando il server ritorna "ACCEPT
-                if(response.equals(MSG_ACCEPT_CLIENT)){
+                if (response.equals(MSG_ACCEPT_CLIENT)) {
                     BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(fileToSend));
                     BufferedOutputStream outputStream = new BufferedOutputStream(socket.getOutputStream());
 
@@ -45,6 +56,9 @@ public class TCP_Client {
                     }
                     outputStream.flush();
                     inputStream.close();
+                } else if (response.equals(MSG_BUSY_CLIENT)) {
+                    Log.d("BUSYYYYYYYYYYYY", "BUSYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY");
+                    if (connectionBusyEvent != null) connectionBusyEvent.onConnectionBusy();
                 }
 
 
@@ -53,7 +67,6 @@ public class TCP_Client {
                 System.err.println(e.getMessage());
             }
         }
-
 
 
     }

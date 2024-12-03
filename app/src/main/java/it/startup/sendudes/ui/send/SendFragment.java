@@ -38,6 +38,7 @@ import java.util.Map;
 
 import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentSendBinding;
+import it.startup.sendudes.utils.file_transfer_utils.TCP_Client;
 import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
 import it.startup.sendudes.utils.UriToPath;
 
@@ -143,6 +144,11 @@ public class SendFragment extends Fragment {
 
                 binding.btnSend.setEnabled(false);
             }
+        });
+        TCP_Client.setConnectionBusyEvent(() -> {
+            requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(getContext(),"BUSY", Toast.LENGTH_SHORT ).show();
+            });
         });
     }
 

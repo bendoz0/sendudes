@@ -12,5 +12,6 @@ public interface IConstants {
     String MSG_ACCEPT_CLIENT = "ACCEPT";
     String MSG_REJECT_CLIENT = "REJECT";
 
+    String MSG_BUSY_CLIENT = "BUSY";
 
 }
