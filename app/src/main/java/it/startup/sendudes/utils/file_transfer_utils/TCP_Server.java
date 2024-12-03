@@ -1,13 +1,18 @@
 package it.startup.sendudes.utils.file_transfer_utils;
 
+import android.os.Environment;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 
 import static it.startup.sendudes.utils.IConstants.MSG_ACCEPT_CLIENT;
 import static it.startup.sendudes.utils.IConstants.MSG_BUSY_CLIENT;
@@ -25,6 +30,7 @@ public class TCP_Server {
     private static String connectedClient;
     private static OnClientConnected actionOnClientConnect;
     private static OnClientDisconnect actionOnClientDisconnect;
+    private static FileTransferPacket fileDetails;
 
     private static boolean connectionOccupied = false;
 
@@ -48,6 +54,7 @@ public class TCP_Server {
                         FileTransferPacket deserializedObject = FileTransferPacket.fromJson(receivedTransferProperties);
                         Log.d("Server", "File transfer properties: " + deserializedObject.toString());
                         acceptedData = deserializedObject.toString();
+                        fileDetails = deserializedObject;
                         connectionOccupied = true;
                         if (actionOnClientConnect != null) actionOnClientConnect.onConnected();
                     } else {
@@ -81,26 +88,52 @@ public class TCP_Server {
             if(msg.equals(MSG_ACCEPT_CLIENT)){
                 String s = "";
 //                StringBuilder complete_bytes = new StringBuilder();
+                int fileSize = (int) fileDetails.getFileSize();
+                byte[] allBytes = new byte[fileSize];
                 try{
                     do{
                         s = in.readLine();
+                        int count = 0;
                         if (s != null) { // Check if the line is not null
 //                            complete_bytes.append(s);
+                            // TODO: needs fixing (sends corrupted files if not txt)
+                            for(char c : s.toCharArray()){
+                                byte b = (byte) c;
+                                allBytes[count] = b;
+                                count++;
+                            }
                         }
                     }while(s != null);
+                Log.d("OUTCOME", Arrays.toString(allBytes));
+                writeToFile(allBytes, fileDetails.getFileName());
+//                    Log.d("String builder", "" + complete_bytes.length());
                 } catch (Exception e){
                     Log.d("BYTE READING ERR", "Line 73 of TCP_SERVER.JAVA\n" + e.getMessage() );
                 }
             }
-//        try {
-//            decisionThread.join();
-//            closeConnections();
-//            connectionOccupied = false;
-//        } catch (InterruptedException e) {
-//            System.err.println(e.getMessage());
-//        }
             closeConnections();
             connectionOccupied = false;
+    }
+
+    public static void writeToFile(byte[] array, String fileName)
+    {
+        try
+        {
+            String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/" + fileName;
+            File file = new File(path);
+            if (!file.exists()) {
+                file.createNewFile();
+                FileOutputStream fos = new FileOutputStream(file);
+                fos.write(array);
+                String filePath = file.getPath();
+                Log.d("PATHHHHHHHHHHHHHHHHHHHHH", filePath);
+                fos.close();
+            }
+        } catch (FileNotFoundException e1) {
+            Log.d("File not found", e1.getMessage());
+        } catch (IOException e) {
+            Log.d("IO error", e.getMessage());
+        }
     }
 
     public static void closeConnections() {
