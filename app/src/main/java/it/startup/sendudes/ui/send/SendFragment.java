@@ -53,8 +53,8 @@ public class SendFragment extends Fragment {
     private long fileSize = 0;
     private File fileToSend;
 
-     View currentlySelectedView = null;
-     String selectedIp = null;
+    View currentlySelectedView = null;
+    String selectedIp = null;
 
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -114,8 +114,7 @@ public class SendFragment extends Fragment {
                         view.setBackgroundColor(getResources().getColor(R.color.teal_200));
                         currentlySelectedView = view;
                         selectedIp = (String) adapterView.getItemAtPosition(position);
-
-                        binding.btnSend.setEnabled(true);
+                        sendBtnEnabler();
                     });
                 }
             });
@@ -146,6 +145,12 @@ public class SendFragment extends Fragment {
                 android.R.layout.simple_dropdown_item_1line,
                 new ArrayList<>(scannedIPs.keySet())
         );
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        sendBtnEnabler();
     }
 
     @Override
@@ -297,5 +302,18 @@ public class SendFragment extends Fragment {
         return null;
     }
 
+
+    public void sendBtnEnabler() {
+        requireActivity().runOnUiThread(() -> {
+
+            if (fileToSend != null && selectedIp != null) {
+                if (!selectedIp.isEmpty() && fileToSend.exists())
+                    binding.btnSend.setEnabled(true);
+            } else {
+                binding.btnSend.setEnabled(false);
+                if (selectedIp == null) Toast.makeText(getContext(), "No selected user found",  Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
 }
