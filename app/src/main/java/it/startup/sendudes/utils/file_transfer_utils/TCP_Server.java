@@ -10,6 +10,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import static it.startup.sendudes.utils.IConstants.MSG_ACCEPT_CLIENT;
+import static it.startup.sendudes.utils.IConstants.MSG_BUSY_CLIENT;
 
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientConnected;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientDisconnect;
@@ -33,8 +34,9 @@ public class TCP_Server {
 //                serverSocket = new ServerSocket(port);
 //                System.out.println("Server is running and waiting for client connection...");
 
+                Socket tmpclientSocket = serverSocket.accept();
                 if(!connectionOccupied){
-                    clientSocket = serverSocket.accept();
+                    clientSocket = tmpclientSocket;
                     System.out.println("Client connected!");
                     connectedClient = clientSocket.getInetAddress().toString();
 
@@ -51,6 +53,10 @@ public class TCP_Server {
                     } else {
                         closeConnections();
                     }
+                }else{
+                    PrintWriter busyOut = new PrintWriter(tmpclientSocket.getOutputStream(), true);
+                    busyOut.println(MSG_BUSY_CLIENT);
+                    tmpclientSocket.close();
                 }
             } catch (Exception e) {
                 System.err.println(e.getMessage());
@@ -79,7 +85,6 @@ public class TCP_Server {
                     do{
                         s = in.readLine();
                         if (s != null) { // Check if the line is not null
-                            Log.d("BYTES READ", s); // Log the bytes
 //                            complete_bytes.append(s);
                         }
                     }while(s != null);
