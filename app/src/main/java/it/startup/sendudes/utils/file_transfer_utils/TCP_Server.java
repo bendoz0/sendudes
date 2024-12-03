@@ -39,9 +39,9 @@ public class TCP_Server {
 
                 String receivedTransferProperties = in.readLine();
                 if (receivedTransferProperties != null && !receivedTransferProperties.isEmpty()) {
-                    //TODO serialize receivedProperties to type FileTransferPacket
-                    Log.d("Server", "File transfer properties: " + receivedTransferProperties);
-                    acceptedData = receivedTransferProperties;
+                    FileTransferPacket deserializedObject = FileTransferPacket.fromJson(receivedTransferProperties);
+                    Log.d("Server", "File transfer properties: " + deserializedObject.toString());
+                    acceptedData = deserializedObject.toString();
 
                 } else {
                     closeConnections();
