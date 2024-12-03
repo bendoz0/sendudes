@@ -25,7 +25,7 @@ public class TCP_Client {
 
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 FileTransferPacket data = new FileTransferPacket("TEST", fileName, fileSize);
-                out.println(data.toJson());
+                out.println(FileTransferPacket.toJson(data));
 
                 String response = in.readLine();
                 System.out.println("Server says: " + response);
