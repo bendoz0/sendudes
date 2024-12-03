@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -85,34 +86,34 @@ public class TCP_Server {
 
     public static void userDecision(String msg) {
             out.println(msg);
-            if(msg.equals(MSG_ACCEPT_CLIENT)){
-                String s = "";
-//                StringBuilder complete_bytes = new StringBuilder();
-                int fileSize = (int) fileDetails.getFileSize();
-                byte[] allBytes = new byte[fileSize];
-                try{
-                    do{
-                        s = in.readLine();
-                        int count = 0;
-                        if (s != null) { // Check if the line is not null
-//                            complete_bytes.append(s);
-                            // TODO: needs fixing (sends corrupted files if not txt)
-                            for(char c : s.toCharArray()){
-                                byte b = (byte) c;
-                                allBytes[count] = b;
-                                count++;
-                            }
-                        }
-                    }while(s != null);
-                Log.d("OUTCOME", Arrays.toString(allBytes));
-                writeToFile(allBytes, fileDetails.getFileName());
-//                    Log.d("String builder", "" + complete_bytes.length());
-                } catch (Exception e){
-                    Log.d("BYTE READING ERR", "Line 73 of TCP_SERVER.JAVA\n" + e.getMessage() );
+        if (msg.equals(MSG_ACCEPT_CLIENT)) {
+            try {
+                int fileSize = (int) fileDetails.getFileSize(); // Expected file size
+                byte[] allBytes = new byte[fileSize]; // Byte array to store the file
+                int totalRead = 0; // Tracks the total bytes read
+                int bytesRead;
+
+                // Reading raw bytes from the input stream
+                InputStream inputStream = clientSocket.getInputStream();
+                while (totalRead < fileSize &&
+                        (bytesRead = inputStream.read(allBytes, totalRead, fileSize - totalRead)) != -1) {
+                    totalRead += bytesRead;
                 }
+
+                // More controls to see if something went wrong in the writing phase
+                if (totalRead == fileSize) {
+                    writeToFile(allBytes, fileDetails.getFileName());
+                    Log.d("OUTCOME", "File received successfully!");
+                } else {
+                    Log.d("OUTCOME", "File size mismatch: expected " + fileSize + ", received " + totalRead);
+                }
+            } catch (Exception e) {
+                Log.d("BYTE READING ERR", "Error receiving file: " + e.getMessage());
             }
-            closeConnections();
-            connectionOccupied = false;
+        }
+
+        closeConnections();
+        connectionOccupied = false;
     }
 
     public static void writeToFile(byte[] array, String fileName)
