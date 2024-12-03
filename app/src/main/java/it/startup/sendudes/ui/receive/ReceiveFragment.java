@@ -49,7 +49,7 @@ public class ReceiveFragment extends Fragment {
 
         try {
             udpHandler = new UDP_NetworkUtils(RECEIVE_PORT, PING_PORT);
-            fileTransferSocket = new ServerSocket(FILE_TRANSFER_PORT);
+            fileTransferSocket = new ServerSocket(FILE_TRANSFER_PORT, 1);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -74,17 +74,21 @@ public class ReceiveFragment extends Fragment {
             requireActivity().runOnUiThread(() -> {
                 binding.btnAcceptData.setEnabled(false);
                 binding.btnRejectData.setEnabled(false);
+                Toast.makeText(getContext(), "User disconnected", Toast.LENGTH_SHORT).show();
             });
-            Toast.makeText(getContext(), "User disconnected", Toast.LENGTH_SHORT).show();
             binding.receiveTtile.setText("User Disconnected");
         });
 
         binding.btnRejectData.setOnClickListener(v -> {
-            userDecision(MSG_REJECT_CLIENT);
+            new Thread(() -> {
+                userDecision(MSG_REJECT_CLIENT);
+            }).start();
         });
         binding.btnAcceptData.setOnClickListener(v -> {
-            userDecision(MSG_ACCEPT_CLIENT);
-            Log.d("FILE ACCEPTED", "FILE CONTAINS: " + binding.receivedData.getText());
+            new Thread(() -> {
+                userDecision(MSG_ACCEPT_CLIENT);
+                Log.d("FILE ACCEPTED", "FILE CONTAINS: " + binding.receivedData.getText());
+            }).start();
         });
     }
 

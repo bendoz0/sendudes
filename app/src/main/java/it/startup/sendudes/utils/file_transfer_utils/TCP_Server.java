@@ -9,6 +9,8 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import static it.startup.sendudes.utils.IConstants.MSG_ACCEPT_CLIENT;
+
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientConnected;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientDisconnect;
 
@@ -23,28 +25,32 @@ public class TCP_Server {
     private static OnClientConnected actionOnClientConnect;
     private static OnClientDisconnect actionOnClientDisconnect;
 
+    private static boolean connectionOccupied = false;
+
     public static void startServerConnection(ServerSocket serverSocket) {
         while (!serverSocket.isClosed()) {
             try {
 //                serverSocket = new ServerSocket(port);
-                System.out.println("Server is running and waiting for client connection...");
+//                System.out.println("Server is running and waiting for client connection...");
 
-                clientSocket = serverSocket.accept();
-                System.out.println("Client connected!");
-                connectedClient = clientSocket.getInetAddress().toString();
-                if (actionOnClientConnect != null) actionOnClientConnect.onConnected();
+                if(!connectionOccupied){
+                    clientSocket = serverSocket.accept();
+                    System.out.println("Client connected!");
+                    connectedClient = clientSocket.getInetAddress().toString();
 
-                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                out = new PrintWriter(clientSocket.getOutputStream(), true);
+                    in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                    out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-                String receivedTransferProperties = in.readLine();
-                if (receivedTransferProperties != null && !receivedTransferProperties.isEmpty()) {
-                    FileTransferPacket deserializedObject = FileTransferPacket.fromJson(receivedTransferProperties);
-                    Log.d("Server", "File transfer properties: " + deserializedObject.toString());
-                    acceptedData = deserializedObject.toString();
-
-                } else {
-                    closeConnections();
+                    String receivedTransferProperties = in.readLine();
+                    if (receivedTransferProperties != null && !receivedTransferProperties.isEmpty()) {
+                        FileTransferPacket deserializedObject = FileTransferPacket.fromJson(receivedTransferProperties);
+                        Log.d("Server", "File transfer properties: " + deserializedObject.toString());
+                        acceptedData = deserializedObject.toString();
+                        connectionOccupied = true;
+                        if (actionOnClientConnect != null) actionOnClientConnect.onConnected();
+                    } else {
+                        closeConnections();
+                    }
                 }
             } catch (Exception e) {
                 System.err.println(e.getMessage());
@@ -65,30 +71,31 @@ public class TCP_Server {
     }
 
     public static void userDecision(String msg) {
-        decisionThread = new Thread(() -> {
             out.println(msg);
-            String s = "";
-            StringBuilder complete_bytes = new StringBuilder();
-            try{
-                do{
-                    s = in.readLine();
-                    if (s != null) { // Check if the line is not null
-                        Log.d("BYTES READ", s); // Log the read line
-                        complete_bytes.append(s);
-                        out.println(complete_bytes);
-                    }
-                }while(s != null);
-            } catch (Exception e){
-                Log.d("BYTE READING ERR", "Line 73 of TCP_SERVER.JAVA\n" + e.getMessage() );
+            if(msg.equals(MSG_ACCEPT_CLIENT)){
+                String s = "";
+//                StringBuilder complete_bytes = new StringBuilder();
+                try{
+                    do{
+                        s = in.readLine();
+                        if (s != null) { // Check if the line is not null
+                            Log.d("BYTES READ", s); // Log the bytes
+//                            complete_bytes.append(s);
+                        }
+                    }while(s != null);
+                } catch (Exception e){
+                    Log.d("BYTE READING ERR", "Line 73 of TCP_SERVER.JAVA\n" + e.getMessage() );
+                }
             }
-        });
-        decisionThread.start();
-        try {
-            decisionThread.join();
+//        try {
+//            decisionThread.join();
+//            closeConnections();
+//            connectionOccupied = false;
+//        } catch (InterruptedException e) {
+//            System.err.println(e.getMessage());
+//        }
             closeConnections();
-        } catch (InterruptedException e) {
-            System.err.println(e.getMessage());
-        }
+            connectionOccupied = false;
     }
 
     public static void closeConnections() {
