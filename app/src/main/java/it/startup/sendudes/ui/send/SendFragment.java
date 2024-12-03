@@ -83,7 +83,15 @@ public class SendFragment extends Fragment {
                 for (int i = 0; i < 32; i++) {
                     udpHandler.scanNetwork();
                 }
-                binding.btnNetworkScanner.postDelayed(() -> binding.btnNetworkScanner.setEnabled(true), 4000);
+                binding.btnNetworkScanner.postDelayed(() -> {
+                    binding.btnNetworkScanner.setEnabled(true);
+                    binding.scanProgressBar.setVisibility(View.GONE);
+                    binding.scannedMsg.setText("No user found");
+                }, 2000);
+                requireActivity().runOnUiThread(() -> {
+                    binding.scanProgressBar.setVisibility(View.VISIBLE);
+                    binding.scannedMsg.setText("Loading");
+                });
             }).start();
 
         });
@@ -205,6 +213,10 @@ public class SendFragment extends Fragment {
         if (!checkPerms()) {
             askPerms();
         } else {
+            if (selectedIp == null) {
+                Toast.makeText(getContext(), "No selected user found",  Toast.LENGTH_SHORT).show();
+                return;
+            }
             chooseFile();
         }
     }
@@ -317,7 +329,6 @@ public class SendFragment extends Fragment {
                     binding.btnSend.setEnabled(true);
             } else {
                 binding.btnSend.setEnabled(false);
-                if (selectedIp == null) Toast.makeText(getContext(), "No selected user found",  Toast.LENGTH_SHORT).show();
             }
         });
     }
