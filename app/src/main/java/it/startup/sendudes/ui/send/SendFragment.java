@@ -139,7 +139,7 @@ public class SendFragment extends Fragment {
         });
         TCP_Client.setConnectionBusyEvent(() -> {
             requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(getContext(),"BUSY", Toast.LENGTH_SHORT ).show();
+                    Toast.makeText(getContext(),"User device is transferring files", Toast.LENGTH_SHORT ).show();
             });
         });
     }
