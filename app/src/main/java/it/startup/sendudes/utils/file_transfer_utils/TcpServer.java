@@ -13,7 +13,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
 
 import static it.startup.sendudes.utils.IConstants.MSG_ACCEPT_CLIENT;
 import static it.startup.sendudes.utils.IConstants.MSG_BUSY_CLIENT;
@@ -22,7 +21,7 @@ import static it.startup.sendudes.utils.IConstants.MSG_FILETRANSFER_FINISHED;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientConnected;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientDisconnect;
 
-public class TCP_Server {
+public class TcpServer {
     private static String acceptedData;
     private static Socket clientSocket;
     private static ServerSocket serverSocket = null;

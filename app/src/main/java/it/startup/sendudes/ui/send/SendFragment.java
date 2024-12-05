@@ -28,7 +28,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,7 +35,7 @@ import java.util.Map;
 
 import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentSendBinding;
-import it.startup.sendudes.utils.file_transfer_utils.TCP_Client;
+import it.startup.sendudes.utils.file_transfer_utils.TcpClient;
 import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
 
 public class SendFragment extends Fragment {
@@ -48,7 +47,7 @@ public class SendFragment extends Fragment {
     private boolean permissionsGranted = false; // Flag to track permissions
     private Map.Entry<String, String> entry;
     private Uri selectedFileUri;
-    private TCP_Client tcpClient;
+    private TcpClient tcpClient;
 
     View currentlySelectedView = null;
     String selectedIp = null;
@@ -64,7 +63,7 @@ public class SendFragment extends Fragment {
         super.onStart();
         try {
             udpHandler = new UDP_NetworkUtils(PING_PORT, RECEIVE_PORT);
-            tcpClient = new TCP_Client();
+            tcpClient = new TcpClient();
         } catch (IOException e) {
             Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
         }

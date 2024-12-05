@@ -6,7 +6,7 @@ public class FileTransferPacket {
     private String userName;
     private String fileName;
     private long fileSize;
-    private static Gson gson = new Gson();
+    private static final Gson gson = new Gson();
     public FileTransferPacket(String userName, String fileName, long fileSize) {
         this.userName = userName;
         this.fileName = fileName;
@@ -14,11 +14,6 @@ public class FileTransferPacket {
     }
 
     public static String toJson(FileTransferPacket ft){
-//        return "{"+
-//                "userName: " + this.userName + ", " +
-//                "fileName: " + this.fileName + ", " +
-//                "fileSize: " + this.fileSize +
-//                "}";
         return gson.toJson(ft);
     }
 

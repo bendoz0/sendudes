@@ -10,11 +10,8 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -25,7 +22,7 @@ import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnTransferError;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnTransferSuccessfull;
 import it.startup.sendudes.utils.files_utils.FileUtils;
 
-public class TCP_Client {
+public class TcpClient {
     private OnConnectionBusy connectionBusyEvent;
     private OnTransferSuccessfull transferSuccessfullEvent;
     private OnTransferError transferErrorEvent;

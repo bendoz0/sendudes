@@ -6,12 +6,12 @@ import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_NOT_RECEIVING;
 import static it.startup.sendudes.utils.IConstants.MSG_REJECT_CLIENT;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
-import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.getAcceptedData;
-import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.getConnectedClient;
-import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.setActionOnClientConnect;
-import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.setActionOnClientDisconnect;
-import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.startServerConnection;
-import static it.startup.sendudes.utils.file_transfer_utils.TCP_Server.userDecision;
+import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.getAcceptedData;
+import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.getConnectedClient;
+import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionOnClientConnect;
+import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionOnClientDisconnect;
+import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.startServerConnection;
+import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.userDecision;
 
 import android.os.Bundle;
 import android.util.Log;
