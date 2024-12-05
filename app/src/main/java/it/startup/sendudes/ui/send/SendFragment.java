@@ -3,7 +3,7 @@ package it.startup.sendudes.ui.send;
 import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
-import static it.startup.sendudes.utils.IConstants.REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE;
+import static it.startup.sendudes.utils.files_utils.PermissionHandler.askForFilePermission;
 import static it.startup.sendudes.utils.network_discovery.NetworkUtils.getMyIP;
 
 import android.Manifest;
@@ -28,11 +28,15 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.permissionx.guolindev.PermissionX;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import it.startup.sendudes.MainActivity;
 import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentSendBinding;
 import it.startup.sendudes.utils.file_transfer_utils.TcpClient;
@@ -102,7 +106,7 @@ public class SendFragment extends Fragment {
 
     private void uiActivityStart() {
         binding.btnSend.setEnabled(false);
-        binding.btnGetIp.setOnClickListener(v -> onClickGetIp());
+        binding.btnGetIp.setOnClickListener(v -> binding.twUserIp.setText(getMyIP()));
         binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
 
         binding.btnNetworkScanner.setOnClickListener(v -> {
@@ -187,16 +191,8 @@ public class SendFragment extends Fragment {
     }
 
     public void TCP_clientThread(String ip) {
-        tcpClientThread = new Thread(() -> {
-            tcpClient.sendFileToServer(ip, FILE_TRANSFER_PORT, selectedFileUri, getContext());
-        });
+        tcpClientThread = new Thread(() -> tcpClient.sendFileToServer(ip, FILE_TRANSFER_PORT, selectedFileUri, getContext()));
         tcpClientThread.start();
-    }
-
-    private void onClickGetIp() {
-//       got em 2 ways to access em ui elements usin java, the one right below this line basically uses a traditional way to access the ui elements, and this way doesn't provide type safety, on the other hand the viewModel way does cuz it's binded to the fragment.
-//       Button btn = root.findViewById(R.id.clickmebtn);
-        binding.twUserIp.setText(getMyIP());
     }
 
     private void broadcastHandshaker() {
@@ -213,24 +209,7 @@ public class SendFragment extends Fragment {
 
     //Metodo per gestire il Btn "Choose File"
     private void onClickChooseFile() {
-        // check se permessi sono abilitati, se no chiede di attivarli
-        if (!checkPerms()) {
-            askPerms();
-        } else {
-            if (selectedIp == null) {
-                Toast.makeText(getContext(), "No selected user found", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            chooseFile();
-        }
-    }
-
-    private boolean checkPerms() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            return Environment.isExternalStorageManager();
-        } else {
-            return permissionsGranted;
-        }
+        askForFilePermission(this, this::chooseFile);
     }
 
 
@@ -266,45 +245,6 @@ public class SendFragment extends Fragment {
                 }
                 Toast.makeText(getContext(), "Nessun file selezionato", Toast.LENGTH_SHORT).show();
             });
-
-
-    public void askPerms() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!Environment.isExternalStorageManager()) {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                Uri uri = Uri.fromParts("package", getActivity().getPackageName(), null);
-                intent.setData(uri);
-                startActivity(intent);
-            }
-        } else {
-            if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
-                    ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(getActivity(),
-                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE);
-            }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE:
-                if (grantResults.length > 0) {
-                    boolean readGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                    boolean writeGranted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
-
-                    if (readGranted && writeGranted) {
-                        permissionsGranted = true; // tutte e due i perms garantiti
-                    } else {
-                        permissionsGranted = false; // Almeno uno dei due perms non garantiti
-                    }
-                } else {
-                    permissionsGranted = false; // nessuna interazione dall'utente
-                }
-                break;
-        }
-    }
 
     public void sendBtnEnabler() {
         requireActivity().runOnUiThread(() -> {

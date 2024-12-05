@@ -1,5 +1,6 @@
 package it.startup.sendudes.utils.file_transfer_utils;
 
+import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
@@ -122,8 +123,11 @@ public class TcpServer {
 
     public static void writeToFile(byte[] array, String fileName) {
         try {
-            String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/" + fileName;
-            File file = new File(path);
+            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            if (dir != null && !dir.exists()) {
+                dir.mkdirs(); // Create directory if it doesn't exist
+            }
+            String path = dir.getPath() + "/" + fileName;            File file = new File(path);
             if (!file.exists()) {
                 file.createNewFile();
                 FileOutputStream fos = new FileOutputStream(file);

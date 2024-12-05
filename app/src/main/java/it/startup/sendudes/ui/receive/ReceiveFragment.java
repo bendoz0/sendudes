@@ -9,6 +9,7 @@ import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.rejectFile
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionOnClientConnect;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionOnClientDisconnect;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.startServerConnection;
+import static it.startup.sendudes.utils.files_utils.PermissionHandler.askForFilePermission;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 import it.startup.sendudes.databinding.FragmentReceiveBinding;
+import it.startup.sendudes.ui.send.SendFragment;
 import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
 
 public class ReceiveFragment extends Fragment {
@@ -52,6 +54,8 @@ public class ReceiveFragment extends Fragment {
         }
         broadcastReplier();
         startServer();
+        //Check for file permission
+        askForFilePermission(this, () -> {});
     }
 
 
