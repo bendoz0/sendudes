@@ -52,7 +52,6 @@ public class SendFragment extends Fragment {
     View currentlySelectedView = null;
     String selectedIp = null;
 
-
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentSendBinding.inflate(inflater, container, false);
         return binding.getRoot();
@@ -131,7 +130,6 @@ public class SendFragment extends Fragment {
                 if (scannedIPs.isEmpty()) {
                     binding.scannedMsg.setVisibility(View.VISIBLE);
                     binding.foundIps.setVisibility(View.GONE);
-
                     Log.d("SCANNED USERS: ", "NO USER FOUND");
                 } else {
                     binding.scannedMsg.setVisibility(View.GONE);

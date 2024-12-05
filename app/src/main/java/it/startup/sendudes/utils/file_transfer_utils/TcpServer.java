@@ -16,7 +16,9 @@ import java.net.Socket;
 
 import static it.startup.sendudes.utils.IConstants.MSG_ACCEPT_CLIENT;
 import static it.startup.sendudes.utils.IConstants.MSG_BUSY_CLIENT;
+import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_RECEIVING;
 import static it.startup.sendudes.utils.IConstants.MSG_FILETRANSFER_FINISHED;
+import static it.startup.sendudes.utils.IConstants.MSG_REJECT_CLIENT;
 
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientConnected;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientDisconnect;
@@ -84,37 +86,38 @@ public class TcpServer {
         return connectedClient;
     }
 
-    public static void userDecision(String msg) {
-        out.println(msg);
-        if (msg.equals(MSG_ACCEPT_CLIENT)) {
-            try {
-                int fileSize = (int) fileDetails.getFileSize(); // Expected file size
-                byte[] allBytes = new byte[fileSize]; // Byte array to store the file
-                int totalRead = 0; // Tracks the total bytes read
-                int bytesRead;
-
-                // Reading raw bytes from the input stream
-                InputStream inputStream = clientSocket.getInputStream();
-                while (totalRead < fileSize &&
-                        (bytesRead = inputStream.read(allBytes, totalRead, fileSize - totalRead)) != -1) {
-                    totalRead += bytesRead;
-                }
-
-                // More controls to see if something went wrong in the writing phase
-                if (totalRead == fileSize) {
-                    out.println(MSG_FILETRANSFER_FINISHED);
-                    writeToFile(allBytes, fileDetails.getFileName());
-                    Log.d("OUTCOME", "File received successfully!");
-                } else {
-                    Log.d("OUTCOME", "File size mismatch: expected " + fileSize + ", received " + totalRead);
-                }
-            } catch (Exception e) {
-                Log.d("BYTE READING ERR", "Error receiving file: " + e.getMessage());
-            }
-        }
-
+    static public void rejectFileFromSocket() {
+        out.println(MSG_REJECT_CLIENT);
         closeConnections();
-        connectionOccupied = false;
+    }
+    static public void acceptFileFromSocket() {
+        try {
+            out.println(MSG_ACCEPT_CLIENT);
+
+            int fileSize = (int) fileDetails.getFileSize(); // Expected file size
+            byte[] allBytes = new byte[fileSize]; // Byte array to store the file
+            int totalRead = 0; // Tracks the total bytes read
+            int bytesRead;
+
+            // Reading raw bytes from the input stream
+            InputStream inputStream = clientSocket.getInputStream();
+            while (totalRead < fileSize &&
+                    (bytesRead = inputStream.read(allBytes, totalRead, fileSize - totalRead)) != -1) {
+                totalRead += bytesRead;
+            }
+
+            // More controls to see if something went wrong in the writing phase
+            if (totalRead == fileSize) {
+                out.println(MSG_FILETRANSFER_FINISHED);
+                writeToFile(allBytes, fileDetails.getFileName());
+                Log.d("OUTCOME", "File received successfully!");
+            } else {
+                Log.d("OUTCOME", "File size mismatch: expected " + fileSize + ", received " + totalRead);
+            }
+        } catch (Exception e) {
+            Log.d("BYTE READING ERR", "Error receiving file: " + e.getMessage());
+        }
+        closeConnections();
     }
 
     public static void writeToFile(byte[] array, String fileName) {
@@ -140,7 +143,8 @@ public class TcpServer {
         try {
             clientSocket.close();
 //            serverSocket.close();
-            actionOnClientDisconnect.onDisconnected();
+            if (actionOnClientConnect != null) actionOnClientDisconnect.onDisconnected();
+            connectionOccupied = false;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -1,17 +1,14 @@
 package it.startup.sendudes.ui.receive;
 
-import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
-import static it.startup.sendudes.utils.IConstants.MSG_ACCEPT_CLIENT;
-import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_NOT_RECEIVING;
-import static it.startup.sendudes.utils.IConstants.MSG_REJECT_CLIENT;
-import static it.startup.sendudes.utils.IConstants.PING_PORT;
-import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
+import static it.startup.sendudes.utils.IConstants.*;
+import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.acceptFileFromSocket;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.getAcceptedData;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.getConnectedClient;
+
+import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.rejectFileFromSocket;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionOnClientConnect;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionOnClientDisconnect;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.startServerConnection;
-import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.userDecision;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -80,13 +77,11 @@ public class ReceiveFragment extends Fragment {
         });
 
         binding.btnRejectData.setOnClickListener(v -> {
-            new Thread(() -> {
-                userDecision(MSG_REJECT_CLIENT);
-            }).start();
+            new Thread(() -> rejectFileFromSocket()).start();
         });
         binding.btnAcceptData.setOnClickListener(v -> {
             new Thread(() -> {
-                userDecision(MSG_ACCEPT_CLIENT);
+                acceptFileFromSocket();
                 Log.d("FILE ACCEPTED", "FILE CONTAINS: " + binding.receivedData.getText());
             }).start();
         });
@@ -104,7 +99,8 @@ public class ReceiveFragment extends Fragment {
         udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
         udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
 
-        if (tcpSeverStarterThread != null && tcpSeverStarterThread.isAlive()) tcpSeverStarterThread.interrupt();
+        if (tcpSeverStarterThread != null && tcpSeverStarterThread.isAlive())
+            tcpSeverStarterThread.interrupt();
         if (!fileTransferSocket.isClosed()) {
             try {
                 fileTransferSocket.close();
