@@ -11,7 +11,6 @@ public interface IConstants {
     String MSG_CLIENT_RECEIVING = "RECEIVING";
     String MSG_ACCEPT_CLIENT = "ACCEPT";
     String MSG_REJECT_CLIENT = "REJECT";
-
     String MSG_BUSY_CLIENT = "BUSY";
-
+    String MSG_FILETRANSFER_FINISHED = "FILE_RECEIVED";
 }

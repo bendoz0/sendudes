@@ -5,7 +5,6 @@ import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.IConstants.REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE;
 import static it.startup.sendudes.utils.network_discovery.NetworkUtils.getMyIP;
-import static it.startup.sendudes.utils.file_transfer_utils.TCP_Client.clientConnection;
 
 import android.Manifest;
 import android.content.Intent;
@@ -30,7 +29,6 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import java.io.File;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,7 +38,6 @@ import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentSendBinding;
 import it.startup.sendudes.utils.file_transfer_utils.TCP_Client;
 import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
-import it.startup.sendudes.utils.UriToPath;
 
 public class SendFragment extends Fragment {
     //FragmentHomeBinding is a class generated automatically when View Binding is enabled (in the android v8 and later on ig)
@@ -50,9 +47,8 @@ public class SendFragment extends Fragment {
     private UDP_NetworkUtils udpHandler;
     private boolean permissionsGranted = false; // Flag to track permissions
     private Map.Entry<String, String> entry;
-    private String fileName;
-    private long fileSize = 0;
-    private File fileToSend;
+    private Uri selectedFileUri;
+    private TCP_Client tcpClient;
 
     View currentlySelectedView = null;
     String selectedIp = null;
@@ -68,10 +64,45 @@ public class SendFragment extends Fragment {
         super.onStart();
         try {
             udpHandler = new UDP_NetworkUtils(PING_PORT, RECEIVE_PORT);
+            tcpClient = new TCP_Client();
         } catch (IOException e) {
             Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
         }
+        uiActivityStart();
+        broadcastHandshaker();
+    }
 
+    @NonNull
+    private ArrayAdapter<String> getIpListAdapter(HashMap<String, String> scannedIPs) {
+        return new ArrayAdapter<>(
+                getContext(),
+                android.R.layout.simple_dropdown_item_1line,
+                new ArrayList<>(scannedIPs.keySet())
+        );
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        sendBtnEnabler();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
+            broadcastHandshakeThread.interrupt();
+        if (tcpClientThread != null && tcpClientThread.isAlive()) tcpClientThread.interrupt();
+        udpHandler.closeSockets();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+
+    private void uiActivityStart() {
         binding.btnSend.setEnabled(false);
         binding.btnGetIp.setOnClickListener(v -> onClickGetIp());
         binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
@@ -128,8 +159,6 @@ public class SendFragment extends Fragment {
                 }
             });
         });
-
-        broadcastHandshaker();
         binding.btnSend.setOnClickListener(l -> {
             if (binding.btnSend.isEnabled() && selectedIp != null) {
                 System.out.println(selectedIp);
@@ -145,46 +174,24 @@ public class SendFragment extends Fragment {
                 binding.btnSend.setEnabled(false);
             }
         });
-        TCP_Client.setConnectionBusyEvent(() -> {
-            requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(getContext(),"User device is transferring files", Toast.LENGTH_SHORT ).show();
-            });
-        });
-    }
-
-    @NonNull
-    private ArrayAdapter<String> getIpListAdapter(HashMap<String, String> scannedIPs) {
-        return new ArrayAdapter<>(
-                getContext(),
-                android.R.layout.simple_dropdown_item_1line,
-                new ArrayList<>(scannedIPs.keySet())
+        tcpClient.setTransferSuccessfullEvent(() ->
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(getContext(), "TRANSFER FINISHED SUCCESSFULLY", Toast.LENGTH_SHORT).show()
+                ));
+        tcpClient.setConnectionBusyEvent(() ->
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(getContext(), "User device is transferring files", Toast.LENGTH_SHORT).show()
+                )
         );
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        sendBtnEnabler();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
-            broadcastHandshakeThread.interrupt();
-        if (tcpClientThread != null && tcpClientThread.isAlive()) tcpClientThread.interrupt();
-        udpHandler.closeSockets();
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
+        tcpClient.setTransferErrorEvent(() ->
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(getContext(), "ERROR OCCURRED WHILE TRANSFERRING THE FILE", Toast.LENGTH_SHORT).show()
+                ));
     }
 
     public void TCP_clientThread(String ip) {
         tcpClientThread = new Thread(() -> {
-            clientConnection(ip, FILE_TRANSFER_PORT, fileToSend);
+            tcpClient.sendFileToServer(ip, FILE_TRANSFER_PORT, selectedFileUri, getContext());
         });
         tcpClientThread.start();
     }
@@ -214,7 +221,7 @@ public class SendFragment extends Fragment {
             askPerms();
         } else {
             if (selectedIp == null) {
-                Toast.makeText(getContext(), "No selected user found",  Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "No selected user found", Toast.LENGTH_SHORT).show();
                 return;
             }
             chooseFile();
@@ -228,6 +235,7 @@ public class SendFragment extends Fragment {
             return permissionsGranted;
         }
     }
+
 
     private void chooseFile() {
         //intent è un oggetto che permeate di avviare il file picker di android per scegliere un file
@@ -244,35 +252,24 @@ public class SendFragment extends Fragment {
         filePickerLauncher.launch(intent);
     }
 
-    /*
-     * "filePickerLauncher" è un oggetto di tipo ActivityResultLauncher<Intent>per gestire un intento
-     * "registerForActivityResult" è un metodo che crea un oggetto "result" passandogli una attività da eseguire con un intent
-     * "result.getResultCode()" questo contine un valore per indicare se è andato a buon fine o meno (1-RESULT_OK oppure 2-RESULT_CENCELED)
-     * "getData()" contiene l'intent usato e il file se è stato selezionato
-     */
-    private final ActivityResultLauncher<Intent> filePickerLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-        if (result.getResultCode() == getActivity().RESULT_OK && result.getData() != null) {
-            Uri fileUri = result.getData().getData();
-            if (fileUri != null) {
-                onFileChosen(fileUri);
-            }
-        } else {
-            Toast.makeText(getContext(), "Nessun file selezionato", Toast.LENGTH_SHORT).show();
-        }
-    });
 
-    //metodo che viene eseguito quando viene selezionato un file
-    private void onFileChosen(Uri fileUri) {
-        // Aggiorna la TextView con il percorso del file scelto
-        String absolutePath = UriToPath.getPathFromUri(getContext(), fileUri);
-        File file = getActualFile(absolutePath);
-        if (file.exists()) {
-            fileToSend = file;
-            binding.fileChosen.setText("File scelto: " + absolutePath);
-        } else {
-            Log.e("FileError", "File does not exist at the specified path: " + absolutePath);
-        }
-    }
+    /*
+     * filePickerLauncher is an ActivityResultLauncher<Intent>
+     * that handles the result of the file picker activity.
+     */
+    private final ActivityResultLauncher<Intent> filePickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == getActivity().RESULT_OK && result.getData() != null) {
+                    Uri fileUri = result.getData().getData();
+                    if (fileUri != null) {
+                        selectedFileUri = fileUri;
+                        binding.fileChosen.setText("File scelto: " + fileUri);
+                        return;
+                    }
+                }
+                Toast.makeText(getContext(), "Nessun file selezionato", Toast.LENGTH_SHORT).show();
+            });
+
 
     public void askPerms() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -312,25 +309,9 @@ public class SendFragment extends Fragment {
         }
     }
 
-    private File getActualFile(String path) {
-        if (!path.isBlank()) {
-            File file = new File(path);
-            return file;
-        }
-        return null;
-    }
-
-
     public void sendBtnEnabler() {
         requireActivity().runOnUiThread(() -> {
-
-            if (fileToSend != null && selectedIp != null) {
-                if (!selectedIp.isEmpty() && fileToSend.exists())
-                    binding.btnSend.setEnabled(true);
-            } else {
-                binding.btnSend.setEnabled(false);
-            }
+            binding.btnSend.setEnabled(selectedFileUri != null && selectedIp != null && !selectedIp.isEmpty());
         });
     }
-
 }

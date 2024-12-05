@@ -17,6 +17,7 @@ import java.util.Arrays;
 
 import static it.startup.sendudes.utils.IConstants.MSG_ACCEPT_CLIENT;
 import static it.startup.sendudes.utils.IConstants.MSG_BUSY_CLIENT;
+import static it.startup.sendudes.utils.IConstants.MSG_FILETRANSFER_FINISHED;
 
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientConnected;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientDisconnect;
@@ -42,7 +43,7 @@ public class TCP_Server {
 //                System.out.println("Server is running and waiting for client connection...");
 
                 Socket tmpclientSocket = serverSocket.accept();
-                if(!connectionOccupied){
+                if (!connectionOccupied) {
                     clientSocket = tmpclientSocket;
                     System.out.println("Client connected!");
                     connectedClient = clientSocket.getInetAddress().toString();
@@ -61,7 +62,7 @@ public class TCP_Server {
                     } else {
                         closeConnections();
                     }
-                }else{
+                } else {
                     PrintWriter busyOut = new PrintWriter(tmpclientSocket.getOutputStream(), true);
                     busyOut.println(MSG_BUSY_CLIENT);
                     tmpclientSocket.close();
@@ -85,7 +86,7 @@ public class TCP_Server {
     }
 
     public static void userDecision(String msg) {
-            out.println(msg);
+        out.println(msg);
         if (msg.equals(MSG_ACCEPT_CLIENT)) {
             try {
                 int fileSize = (int) fileDetails.getFileSize(); // Expected file size
@@ -102,6 +103,7 @@ public class TCP_Server {
 
                 // More controls to see if something went wrong in the writing phase
                 if (totalRead == fileSize) {
+                    out.println(MSG_FILETRANSFER_FINISHED);
                     writeToFile(allBytes, fileDetails.getFileName());
                     Log.d("OUTCOME", "File received successfully!");
                 } else {
@@ -116,10 +118,8 @@ public class TCP_Server {
         connectionOccupied = false;
     }
 
-    public static void writeToFile(byte[] array, String fileName)
-    {
-        try
-        {
+    public static void writeToFile(byte[] array, String fileName) {
+        try {
             String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/" + fileName;
             File file = new File(path);
             if (!file.exists()) {
