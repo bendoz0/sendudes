@@ -51,7 +51,7 @@ public class FileUtils {
         }
     }
 
-    public static byte[] readBytesFromUri(Context context, Uri uri) {
+    public static FileDescriptor getFileDescriptorFromURI(Context context, Uri uri) {
         // Open a ParcelFileDescriptor from the URI
         ParcelFileDescriptor parcelFileDescriptor = null;
         try {
@@ -64,27 +64,6 @@ public class FileUtils {
         }
 
         // Get the FileDescriptor and create a FileInputStream
-        FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-        FileInputStream fileInputStream = new FileInputStream(fileDescriptor);
-
-        // Read bytes into a byte array
-        byte[] data = new byte[(int) parcelFileDescriptor.getStatSize()];
-
-        int bytesRead = 0;
-        try {
-            bytesRead = fileInputStream.read(data);
-
-            // Close resources
-            fileInputStream.close();
-            parcelFileDescriptor.close();
-
-            // Check if all bytes were read
-            if (bytesRead != data.length) {
-                return null;
-            }
-            return data; // Return the byte array
-        } catch (IOException e) {
-            return null;
-        }
+        return parcelFileDescriptor.getFileDescriptor();
     }
 }
