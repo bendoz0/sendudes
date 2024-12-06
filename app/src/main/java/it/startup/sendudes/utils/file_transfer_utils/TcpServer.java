@@ -109,8 +109,8 @@ public class TcpServer {
                 FileOutputStream fos = new FileOutputStream(file, true);
                 // Reading raw bytes from the input stream
                 InputStream socketInputStream = clientSocket.getInputStream();
+                byte[] bytesReceived = new byte[16 * 1024];
                 while (nTotalRead < fileSize) {
-                    byte[] bytesReceived = new byte[16 * 1024];
                     nBytesRead = socketInputStream.read(bytesReceived);
                     if (nBytesRead == -1) {
                         break;
