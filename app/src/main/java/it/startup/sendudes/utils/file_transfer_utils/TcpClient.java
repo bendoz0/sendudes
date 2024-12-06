@@ -54,7 +54,6 @@ public class TcpClient {
                     while ((bytesToSend = fileInputStream.read(buffer)) != -1) {
                         socketOutputStream.write(buffer, 0, bytesToSend);
                         socketOutputStream.flush();
-//                        socketOutputStream.write(buffer, 0, buffer.length);
                     }
 
                     fileInputStream.close();
