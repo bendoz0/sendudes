@@ -53,9 +53,10 @@ public class ReceiveFragment extends Fragment {
             throw new RuntimeException(e);
         }
         broadcastReplier();
-        startServer();
-        //Check for file permission
+        startFileTransferServer();
         askForFilePermission(this, () -> {});
+
+        udpHandler.broadcast(MSG_CLIENT_RECEIVING);
     }
 
 
@@ -115,10 +116,9 @@ public class ReceiveFragment extends Fragment {
         udpHandler.closeSockets();
     }
 
-    private void startServer() {
+    private void startFileTransferServer() {
         tcpSeverStarterThread = new Thread(() -> {
             startServerConnection(fileTransferSocket);
-
         });
         tcpSeverStarterThread.start();
     }
