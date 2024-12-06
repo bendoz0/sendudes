@@ -4,13 +4,10 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.InputStream;
 
 public class FileUtils {
     public static FileInfo getFileInfoFromUri(Context context, Uri uri) {
@@ -51,39 +48,10 @@ public class FileUtils {
         }
     }
 
-    public static byte[] readBytesFromUri(Context context, Uri uri) {
-        // Open a ParcelFileDescriptor from the URI
-        ParcelFileDescriptor parcelFileDescriptor = null;
+    public static InputStream getFileInputStreamFromURI(Context context, Uri uri) {
         try {
-            parcelFileDescriptor = context.getContentResolver().openFileDescriptor(uri, "r");
+            return context.getContentResolver().openInputStream(uri);
         } catch (FileNotFoundException e) {
-            return null;
-        }
-        if (parcelFileDescriptor == null) {
-            return null;
-        }
-
-        // Get the FileDescriptor and create a FileInputStream
-        FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-        FileInputStream fileInputStream = new FileInputStream(fileDescriptor);
-
-        // Read bytes into a byte array
-        byte[] data = new byte[(int) parcelFileDescriptor.getStatSize()];
-
-        int bytesRead = 0;
-        try {
-            bytesRead = fileInputStream.read(data);
-
-            // Close resources
-            fileInputStream.close();
-            parcelFileDescriptor.close();
-
-            // Check if all bytes were read
-            if (bytesRead != data.length) {
-                return null;
-            }
-            return data; // Return the byte array
-        } catch (IOException e) {
             return null;
         }
     }

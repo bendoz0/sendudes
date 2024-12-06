@@ -84,7 +84,7 @@ public class SendFragment extends Fragment {
         if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
             broadcastHandshakeThread.interrupt();
         if (tcpClientThread != null && tcpClientThread.isAlive()) tcpClientThread.interrupt();
-        udpHandler.closeSockets();
+        if (udpHandler != null) udpHandler.closeSockets();
     }
 
     @Override
