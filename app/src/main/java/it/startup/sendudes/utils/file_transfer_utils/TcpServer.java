@@ -91,6 +91,7 @@ public class TcpServer {
         out.println(MSG_REJECT_CLIENT);
         closeConnections();
     }
+
     static public void acceptFileFromSocket() {
         try {
             out.println(MSG_ACCEPT_CLIENT);
@@ -124,10 +125,8 @@ public class TcpServer {
     public static void writeToFile(byte[] array, String fileName) {
         try {
             File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            if (dir != null && !dir.exists()) {
-                dir.mkdirs(); // Create directory if it doesn't exist
-            }
-            String path = dir.getPath() + "/" + fileName;            File file = new File(path);
+            String path = dir.getPath() + "/" + fileName;
+            File file = new File(path);
             if (!file.exists()) {
                 file.createNewFile();
                 FileOutputStream fos = new FileOutputStream(file);
