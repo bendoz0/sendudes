@@ -50,6 +50,7 @@ public class FileUtils {
             this.size = size;
         }
     }
+
     public static byte[] readBytesFromUri(Context context, Uri uri) {
         // Open a ParcelFileDescriptor from the URI
         ParcelFileDescriptor parcelFileDescriptor = null;
