@@ -30,6 +30,7 @@ import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentSendBinding;
 import it.startup.sendudes.utils.file_transfer_utils.TcpClient;
 import it.startup.sendudes.utils.files_utils.FileUtils;
+import it.startup.sendudes.utils.network_discovery.OnListUpdate;
 import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
 
 public class SendFragment extends Fragment {
@@ -116,9 +117,13 @@ public class SendFragment extends Fragment {
             }).start();
 
         });
-        udpHandler.onListUpdate((scannedIPs) ->
-        {
+        OnListUpdate updatedList = scannedIPs -> {
             requireActivity().runOnUiThread(() -> {
+                if (scannedIPs == null) {
+                    Toast.makeText(getContext(), "no connection", Toast.LENGTH_LONG).show();
+
+                    return;
+                }
                 if (scannedIPs.isEmpty()) {
                     binding.scannedMsg.setVisibility(View.VISIBLE);
                     binding.foundIps.setVisibility(View.GONE);
@@ -147,7 +152,12 @@ public class SendFragment extends Fragment {
                     });
                 }
             });
-        });
+        };
+        try {
+            udpHandler.onListUpdate(updatedList);
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "no connection", Toast.LENGTH_LONG).show();
+        }
         binding.btnSend.setOnClickListener(l -> {
             if (binding.btnSend.isEnabled() && selectedIp != null) {
                 System.out.println(selectedIp);
@@ -163,6 +173,14 @@ public class SendFragment extends Fragment {
                 binding.btnSend.setEnabled(false);
             }
         });
+        try {
+            tcpStarter();
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "no connection", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void tcpStarter() {
         tcpClient.setTransferSuccessfullEvent(() ->
                 requireActivity().runOnUiThread(() -> {
                             Toast.makeText(getContext(), "TRANSFER FINISHED SUCCESSFULLY", Toast.LENGTH_SHORT).show();
