@@ -1,7 +1,11 @@
 package it.startup.sendudes.utils;
 
+import static it.startup.sendudes.utils.network_discovery.NetworkUtils.getMyIP;
+
+import com.github.javafaker.Faker;
+
 public interface IConstants {
-    public static final int REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE = 1;
+    int REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE = 1;
     int PING_PORT = 8000;
     int RECEIVE_PORT = 8001;
     int FILE_TRANSFER_PORT = 8002;
@@ -13,4 +17,6 @@ public interface IConstants {
     String MSG_REJECT_CLIENT = "REJECT";
     String MSG_BUSY_CLIENT = "BUSY";
     String MSG_FILETRANSFER_FINISHED = "FILE_RECEIVED";
+    String username = new Faker().name().firstName() + "#" + getMyIP();
+
 }

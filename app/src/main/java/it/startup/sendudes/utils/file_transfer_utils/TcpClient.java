@@ -28,7 +28,7 @@ public class TcpClient {
     private OnTransferSuccessfull transferSuccessfulEvent;
     private OnTransferError transferErrorEvent;
 
-    public void sendFileToServer(String IP, int port, Uri uri, Context context) {//TODO: refactor and spilt in multiple function + better error handling (close outputStream in case of errors)
+    public void sendFileToServer(String IP, int port, Uri uri, String username, String message, Context context) {//TODO: refactor and spilt in multiple function + better error handling (close outputStream in case of errors)
         FileUtils.FileInfo fileInfoFromUri = getFileInfoFromUri(context, uri);
         try {
             Socket socket = new Socket(IP, port);
@@ -36,7 +36,7 @@ public class TcpClient {
 
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            FileTransferPacket data = new FileTransferPacket("TEST", fileInfoFromUri.name, fileInfoFromUri.size);
+            FileTransferPacket data = new FileTransferPacket(username, fileInfoFromUri.name, fileInfoFromUri.size, message);
             out.println(FileTransferPacket.toJson(data));
 
             String response = in.readLine();

@@ -8,23 +8,24 @@ import static it.startup.sendudes.utils.network_discovery.NetworkUtils.getMyIP;
 
 import android.util.Log;
 
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.HashMap;
-import java.util.Optional;
 
 public class UDP_NetworkUtils {
     private final DatagramSocket sendSocket;
     private final MulticastSocket listenerSocket;
     private final HashMap<String, String> foundIps = new HashMap<>();
     private OnListUpdate actionListUpdated;
+    private String username;
 
-    public UDP_NetworkUtils(int sendSocketPort, int listenerSocketPort) throws IOException {
+    public UDP_NetworkUtils(int sendSocketPort, int listenerSocketPort, String username) throws IOException {
         this.sendSocket = new DatagramSocket(sendSocketPort);
-
+        setUsername(username);
         this.listenerSocket = new MulticastSocket(listenerSocketPort);
         InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
         listenerSocket.joinGroup(group);
@@ -33,7 +34,7 @@ public class UDP_NetworkUtils {
     public void tryBroadcast(String message) {
         try {
             sendSocket.setBroadcast(true);
-            byte[] buffer = !message.isEmpty() ? message.getBytes() : ("HELLO FROM: " + getMyIP()).getBytes();
+            byte[] buffer = !message.isEmpty() ? (username + ":" + message).getBytes() : ("HELLO FROM: " + getMyIP()).getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(MULTICAST_ADDRESS), sendSocket.getLocalPort());
             sendSocket.send(packet);
             Log.d("BROADCAST", "BROADCASTED MSG: " + message);
@@ -74,10 +75,6 @@ public class UDP_NetworkUtils {
         }
     }
 
-    public Optional<HashMap<String, String>> getFoundIps() {
-        if (!foundIps.isEmpty()) return Optional.of(foundIps);
-        return Optional.empty();
-    }
 
     public void onListUpdate(OnListUpdate x) {
         actionListUpdated = x;
@@ -95,10 +92,10 @@ public class UDP_NetworkUtils {
         if (ip == null) {
             return;
         }
-        String hostName = receivedPack.getAddress().getHostName();
         String msg = new String(receivedPack.getData(), 0, receivedPack.getLength());
+        String[] arrayedMsg = msg.split(":", 2);
 
-        switch (msg) {
+        switch (arrayedMsg[1]) {
             case MSG_CLIENT_PING:
                 broadcast(MSG_CLIENT_RECEIVING);
 
@@ -111,7 +108,7 @@ public class UDP_NetworkUtils {
             case MSG_CLIENT_RECEIVING:
                 if (!foundIps.containsKey(ip) && !ip.contains(getMyIP())) {
                     System.out.println("ADDED NEW IP: " + ip);
-                    foundIps.put(ip, hostName);
+                    foundIps.put(ip, arrayedMsg[0]);
                     _triggerListUpdateEvent();
                 }
                 break;
@@ -123,4 +120,11 @@ public class UDP_NetworkUtils {
         sendSocket.close();
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
 }

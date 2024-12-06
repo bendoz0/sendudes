@@ -3,8 +3,8 @@ package it.startup.sendudes.ui.send;
 import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
+import static it.startup.sendudes.utils.IConstants.username;
 import static it.startup.sendudes.utils.files_utils.PermissionHandler.askForFilePermission;
-import static it.startup.sendudes.utils.network_discovery.NetworkUtils.getMyIP;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -20,6 +20,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+
 
 
 import java.io.IOException;
@@ -45,6 +46,7 @@ public class SendFragment extends Fragment {
     View currentlySelectedView = null;
     String selectedIp = null;
 
+
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentSendBinding.inflate(inflater, container, false);
         return binding.getRoot();
@@ -54,7 +56,7 @@ public class SendFragment extends Fragment {
     public void onStart() {
         super.onStart();
         try {
-            udpHandler = new UDP_NetworkUtils(PING_PORT, RECEIVE_PORT);
+            udpHandler = new UDP_NetworkUtils(PING_PORT, RECEIVE_PORT, username);
             tcpClient = new TcpClient();
         } catch (IOException e) {
             Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
@@ -68,7 +70,7 @@ public class SendFragment extends Fragment {
         return new ArrayAdapter<>(
                 getContext(),
                 android.R.layout.simple_dropdown_item_1line,
-                new ArrayList<>(scannedIPs.keySet())
+                new ArrayList<>(scannedIPs.values())
         );
     }
 
@@ -95,7 +97,7 @@ public class SendFragment extends Fragment {
 
     private void uiActivityStart() {
         binding.btnSend.setEnabled(false);
-        binding.btnGetIp.setOnClickListener(v -> binding.twUserIp.setText(getMyIP()));
+        binding.twUserIp.setText(username);
         binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
 
         binding.btnNetworkScanner.setOnClickListener(v -> {
@@ -160,8 +162,7 @@ public class SendFragment extends Fragment {
         }
         binding.btnSend.setOnClickListener(l -> {
             if (binding.btnSend.isEnabled() && selectedIp != null) {
-                System.out.println(selectedIp);
-                TCP_clientThread(selectedIp);
+                TCP_clientThread(selectedIp.split("#", 2)[1]);
 
                 if (currentlySelectedView != null) {
                     currentlySelectedView.setSelected(false);
@@ -202,7 +203,7 @@ public class SendFragment extends Fragment {
     }
 
     public void TCP_clientThread(String ip) {
-        tcpClientThread = new Thread(() -> tcpClient.sendFileToServer(ip, FILE_TRANSFER_PORT, selectedFileUri, getContext()));
+        tcpClientThread = new Thread(() -> tcpClient.sendFileToServer(ip, FILE_TRANSFER_PORT, selectedFileUri, username, binding.optionalMessage.getText().toString(), getContext()));
         tcpClientThread.start();
     }
 

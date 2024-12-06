@@ -7,6 +7,19 @@
     tools:context=".ui.receive.ReceiveFragment">
 
     <TextView
+        android:id="@+id/tw_userIp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="14dp"
+        android:text="Your IP"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/receiveTtile"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
         android:id="@+id/receiveTtile"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

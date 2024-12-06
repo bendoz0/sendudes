@@ -21,12 +21,12 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Objects;
 
 import it.startup.sendudes.databinding.FragmentReceiveBinding;
-import it.startup.sendudes.ui.send.SendFragment;
 import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
 
 public class ReceiveFragment extends Fragment {
@@ -38,6 +38,8 @@ public class ReceiveFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentReceiveBinding.inflate(inflater, container, false);
+
+
         return binding.getRoot();
     }
 
@@ -46,16 +48,18 @@ public class ReceiveFragment extends Fragment {
         super.onStart();
         binding.btnAcceptData.setEnabled(false);
         binding.btnRejectData.setEnabled(false);
+        binding.twUserIp.setText(username);
 
         try {
-            udpHandler = new UDP_NetworkUtils(RECEIVE_PORT, PING_PORT);
+            udpHandler = new UDP_NetworkUtils(RECEIVE_PORT, PING_PORT, username);
             fileTransferSocket = new ServerSocket(FILE_TRANSFER_PORT, 1);
         } catch (IOException e) {
             Log.d("ERROR ON START", Objects.requireNonNull(e.getMessage()));
         }
         broadcastReplier();
         startFileTransferServer();
-        askForFilePermission(this, () -> {});
+        askForFilePermission(this, () -> {
+        });
 
         udpHandler.broadcast(MSG_CLIENT_RECEIVING);
     }

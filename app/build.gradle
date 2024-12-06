@@ -45,5 +45,7 @@ dependencies {
     androidTestImplementation libs.espresso.core
     implementation libs.gson
     implementation libs.permissionx
+    implementation libs.javafaker
+
 
 }
