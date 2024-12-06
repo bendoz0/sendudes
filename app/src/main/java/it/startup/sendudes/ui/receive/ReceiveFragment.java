@@ -23,6 +23,7 @@ import androidx.fragment.app.Fragment;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Objects;
 
 import it.startup.sendudes.databinding.FragmentReceiveBinding;
 import it.startup.sendudes.ui.send.SendFragment;
@@ -50,7 +51,7 @@ public class ReceiveFragment extends Fragment {
             udpHandler = new UDP_NetworkUtils(RECEIVE_PORT, PING_PORT);
             fileTransferSocket = new ServerSocket(FILE_TRANSFER_PORT, 1);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            Log.d("ERROR ON START", Objects.requireNonNull(e.getMessage()));
         }
         broadcastReplier();
         startFileTransferServer();
@@ -68,8 +69,8 @@ public class ReceiveFragment extends Fragment {
                 binding.btnAcceptData.setEnabled(true);
                 binding.btnRejectData.setEnabled(true);
                 binding.receivedData.setText(getAcceptedData());
+                binding.receiveTtile.setText(getConnectedClient());
             });
-            binding.receiveTtile.setText(getConnectedClient());
         });
 
         setActionOnClientDisconnect(() -> {
@@ -77,8 +78,8 @@ public class ReceiveFragment extends Fragment {
                 binding.btnAcceptData.setEnabled(false);
                 binding.btnRejectData.setEnabled(false);
                 Toast.makeText(getContext(), "User disconnected", Toast.LENGTH_SHORT).show();
+                binding.receiveTtile.setText("User Disconnected");
             });
-            binding.receiveTtile.setText("User Disconnected");
         });
 
         binding.btnRejectData.setOnClickListener(v -> {
