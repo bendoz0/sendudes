@@ -48,11 +48,11 @@
         android:id="@+id/scanProgressBar"
         android:layout_width="25dp"
         android:layout_height="26dp"
-        android:visibility="gone"
         android:indeterminateTint="@color/cardview_dark_background"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnNetworkScanner"/>
+        app:layout_constraintTop_toBottomOf="@+id/btnNetworkScanner" />
 
     <TextView
         android:id="@+id/scannedMsg"
@@ -84,9 +84,28 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="No file chosen"
+        android:background="@drawable/rounded_background"
+        android:padding="8dp"
         android:textAlignment="center"
-        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/optionalMessage"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <EditText
+        android:id="@+id/optionalMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:autofillHints="Hi"
+        android:background="@drawable/rounded_edittext_background"
+        android:hint="Enter your text here"
+        android:inputType="text"
+        android:layout_margin="16dp"
+        android:padding="12dp"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/bottomBtns"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

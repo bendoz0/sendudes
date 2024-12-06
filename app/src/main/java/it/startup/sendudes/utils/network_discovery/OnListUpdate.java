@@ -4,5 +4,5 @@ import java.util.HashMap;
 
 @FunctionalInterface
 public interface OnListUpdate {
-    void listUpdated(HashMap<String,String> foudIps);
+    void listUpdated(HashMap<String,String> foundIps);
 }
