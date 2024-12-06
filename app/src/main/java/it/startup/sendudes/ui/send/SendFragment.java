@@ -6,14 +6,9 @@ import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.files_utils.PermissionHandler.askForFilePermission;
 import static it.startup.sendudes.utils.network_discovery.NetworkUtils.getMyIP;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,19 +19,13 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.permissionx.guolindev.PermissionX;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-import it.startup.sendudes.MainActivity;
 import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentSendBinding;
 import it.startup.sendudes.utils.file_transfer_utils.TcpClient;
@@ -48,8 +37,6 @@ public class SendFragment extends Fragment {
     private Thread broadcastHandshakeThread;
     private Thread tcpClientThread;
     private UDP_NetworkUtils udpHandler;
-    private boolean permissionsGranted = false; // Flag to track permissions
-    private Map.Entry<String, String> entry;
     private Uri selectedFileUri;
     private TcpClient tcpClient;
 
@@ -86,7 +73,7 @@ public class SendFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        sendBtnEnabler();
+        updateSendBtnState();
     }
 
     @Override
@@ -155,7 +142,7 @@ public class SendFragment extends Fragment {
                         view.setBackgroundColor(getResources().getColor(R.color.teal_200));
                         currentlySelectedView = view;
                         selectedIp = (String) adapterView.getItemAtPosition(position);
-                        sendBtnEnabler();
+                        updateSendBtnState();
                     });
                 }
             });
@@ -176,8 +163,11 @@ public class SendFragment extends Fragment {
             }
         });
         tcpClient.setTransferSuccessfullEvent(() ->
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(getContext(), "TRANSFER FINISHED SUCCESSFULLY", Toast.LENGTH_SHORT).show()
+                requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), "TRANSFER FINISHED SUCCESSFULLY", Toast.LENGTH_SHORT).show();
+                            selectedFileUri = null;
+                            updateSendBtnState();
+                        }
                 ));
         tcpClient.setConnectionBusyEvent(() ->
                 requireActivity().runOnUiThread(() ->
@@ -185,8 +175,10 @@ public class SendFragment extends Fragment {
                 )
         );
         tcpClient.setTransferErrorEvent(() ->
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(getContext(), "ERROR OCCURRED WHILE TRANSFERRING THE FILE", Toast.LENGTH_SHORT).show()
+                requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), "ERROR OCCURRED WHILE TRANSFERRING THE FILE", Toast.LENGTH_SHORT).show();
+                            updateSendBtnState();
+                        }
                 ));
     }
 
@@ -239,15 +231,16 @@ public class SendFragment extends Fragment {
                     Uri fileUri = result.getData().getData();
                     if (fileUri != null) {
                         selectedFileUri = fileUri;
-                        binding.fileChosen.setText("File scelto: " + fileUri);
+                        updateSendBtnState();
                         return;
                     }
                 }
                 Toast.makeText(getContext(), "Nessun file selezionato", Toast.LENGTH_SHORT).show();
             });
 
-    public void sendBtnEnabler() {
+    public void updateSendBtnState() {
         requireActivity().runOnUiThread(() -> {
+            binding.fileChosen.setText((selectedFileUri != null ? "File scelto: " + selectedFileUri : "Nessun file selezionato"));
             binding.btnSend.setEnabled(selectedFileUri != null && selectedIp != null && !selectedIp.isEmpty());
         });
     }
