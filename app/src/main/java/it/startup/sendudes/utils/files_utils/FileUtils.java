@@ -4,13 +4,10 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.InputStream;
 
 public class FileUtils {
     public static FileInfo getFileInfoFromUri(Context context, Uri uri) {
@@ -51,19 +48,11 @@ public class FileUtils {
         }
     }
 
-    public static FileDescriptor getFileDescriptorFromURI(Context context, Uri uri) {
-        // Open a ParcelFileDescriptor from the URI
-        ParcelFileDescriptor parcelFileDescriptor = null;
+    public static InputStream getFileInputStreamFromURI(Context context, Uri uri) {
         try {
-            parcelFileDescriptor = context.getContentResolver().openFileDescriptor(uri, "r");
+            return context.getContentResolver().openInputStream(uri);
         } catch (FileNotFoundException e) {
             return null;
         }
-        if (parcelFileDescriptor == null) {
-            return null;
-        }
-
-        // Get the FileDescriptor and create a FileInputStream
-        return parcelFileDescriptor.getFileDescriptor();
     }
 }

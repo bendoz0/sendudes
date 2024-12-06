@@ -38,7 +38,7 @@ public class TcpServer {
 
     private static boolean connectionOccupied = false;
 
-    public static void startServerConnection(ServerSocket serverSocket) {
+    public static void startServerConnection(ServerSocket serverSocket) {//TODO: refactor
         while (!serverSocket.isClosed()) {
             try {
 //                serverSocket = new ServerSocket(port);
@@ -92,54 +92,42 @@ public class TcpServer {
         closeConnections();
     }
 
-    static public void acceptFileFromSocket() {
+    static public void acceptFileFromSocket() {//TODO: refactor and spilt in multiple function + better error handling (close outputStream in case of errors)
         try {
             out.println(MSG_ACCEPT_CLIENT);
 
             int fileSize = (int) fileDetails.getFileSize(); // Expected file size
-            byte[] allBytes = new byte[fileSize]; // Byte array to store the file
-            int totalRead = 0; // Tracks the total bytes read
-            int bytesRead;
 
-            // Reading raw bytes from the input stream
-            InputStream inputStream = clientSocket.getInputStream();
-            while (totalRead < fileSize &&
-                    (bytesRead = inputStream.read(allBytes, totalRead, fileSize - totalRead)) != -1) {
-                totalRead += bytesRead;
-            }
+            int nTotalRead = 0; // Tracks the total bytes read
+            int nBytesRead;
+            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            String path = dir.getPath() + "/" + fileDetails.getFileName();
+            File file = new File(path);
 
-            // More controls to see if something went wrong in the writing phase
-            if (totalRead == fileSize) {
+            if (!file.exists()) {
+                file.createNewFile();
+                FileOutputStream fos = new FileOutputStream(file, true);
+                // Reading raw bytes from the input stream
+                InputStream socketInputStream = clientSocket.getInputStream();
+                while (nTotalRead < fileSize) {
+                    byte[] bytesReceived = new byte[16 * 1024];
+                    nBytesRead = socketInputStream.read(bytesReceived);
+                    if (nBytesRead == -1) {
+                        break;
+                    }
+                    fos.write(bytesReceived, 0, nBytesRead);
+                    fos.flush();
+                    nTotalRead += nBytesRead;
+                    double progress = ((double) nTotalRead / (double) fileSize) * 100;
+                    Log.d("FILE TRANSFER", "Progress:" + String.format("%.0f", progress) + "%");
+                }
                 out.println(MSG_FILETRANSFER_FINISHED);
-                writeToFile(allBytes, fileDetails.getFileName());
-                Log.d("OUTCOME", "File received successfully!");
-            } else {
-                Log.d("OUTCOME", "File size mismatch: expected " + fileSize + ", received " + totalRead);
+                fos.close();
             }
         } catch (Exception e) {
             Log.d("BYTE READING ERR", "Error receiving file: " + e.getMessage());
         }
         closeConnections();
-    }
-
-    public static void writeToFile(byte[] array, String fileName) {
-        try {
-            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            String path = dir.getPath() + "/" + fileName;
-            File file = new File(path);
-            if (!file.exists()) {
-                file.createNewFile();
-                FileOutputStream fos = new FileOutputStream(file);
-                fos.write(array);
-                String filePath = file.getPath();
-                Log.d("PATHHHHHHHHHHHHHHHHHHHHH", filePath);
-                fos.close();
-            }
-        } catch (FileNotFoundException e1) {
-            Log.d("File not found", e1.getMessage());
-        } catch (IOException e) {
-            Log.d("IO error", e.getMessage());
-        }
     }
 
     public static void closeConnections() {
