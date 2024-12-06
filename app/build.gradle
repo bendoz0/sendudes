@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "it.startup.sendudes"
-        minSdk 28
+        minSdk 29
         targetSdk 34
         versionCode 1
         versionName "1.0"
@@ -44,6 +44,6 @@ dependencies {
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
     implementation libs.gson
-    implementation 'com.guolindev.permissionx:permissionx:1.8.1'
+    implementation libs.permissionx
 
 }

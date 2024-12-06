@@ -29,6 +29,7 @@ import java.util.HashMap;
 import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentSendBinding;
 import it.startup.sendudes.utils.file_transfer_utils.TcpClient;
+import it.startup.sendudes.utils.files_utils.FileUtils;
 import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
 
 public class SendFragment extends Fragment {
@@ -240,7 +241,7 @@ public class SendFragment extends Fragment {
 
     public void updateSendBtnState() {
         requireActivity().runOnUiThread(() -> {
-            binding.fileChosen.setText((selectedFileUri != null ? "File scelto: " + selectedFileUri : "Nessun file selezionato"));
+            binding.fileChosen.setText((selectedFileUri != null ? "File scelto: " + FileUtils.getFileInfoFromUri(getContext(), selectedFileUri).name : "Nessun file selezionato"));
             binding.btnSend.setEnabled(selectedFileUri != null && selectedIp != null && !selectedIp.isEmpty());
         });
     }
