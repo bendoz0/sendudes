@@ -106,8 +106,8 @@ public class UDP_NetworkUtils {
                 _triggerListUpdateEvent();
                 break;
             case MSG_CLIENT_RECEIVING:
-                if (!foundIps.containsKey(ip) && !ip.contains(getMyIP())) {
-                    System.out.println("ADDED NEW IP: " + ip);
+                if (!ip.contains(arrayedMsg[0])) {
+                    System.out.println("ADDED NEW IP: " + arrayedMsg[0]+ ip);
                     foundIps.put(ip, arrayedMsg[0]);
                     _triggerListUpdateEvent();
                 }
