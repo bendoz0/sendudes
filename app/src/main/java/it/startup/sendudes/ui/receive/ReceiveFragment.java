@@ -1,10 +1,8 @@
 package it.startup.sendudes.ui.receive;
 
 import static it.startup.sendudes.utils.IConstants.*;
-import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.acceptFileFromSocket;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.getAcceptedObject;
 
-import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.rejectFileFromSocket;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionOnClientConnect;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionOnClientDisconnect;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.startServerConnection;
@@ -27,6 +25,7 @@ import java.util.Objects;
 
 import it.startup.sendudes.databinding.FragmentReceiveBinding;
 import it.startup.sendudes.utils.file_transfer_utils.FileTransferPacket;
+import it.startup.sendudes.utils.file_transfer_utils.TcpServer;
 import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
 
 public class ReceiveFragment extends Fragment {
@@ -35,6 +34,7 @@ public class ReceiveFragment extends Fragment {
     private Thread broadcastReplierThread;
     private Thread tcpSeverStarterThread;
     private ServerSocket fileTransferSocket;
+    private FileTransferPacket fileInArrival;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentReceiveBinding.inflate(inflater, container, false);
@@ -49,6 +49,7 @@ public class ReceiveFragment extends Fragment {
         binding.btnAcceptData.setEnabled(false);
         binding.btnRejectData.setEnabled(false);
         binding.twUserIp.setText(username);
+        binding.cardView.setVisibility(View.GONE);
 
         try {
             udpHandler = new UDP_NetworkUtils(RECEIVE_PORT, PING_PORT, username);
@@ -86,22 +87,27 @@ public class ReceiveFragment extends Fragment {
         });
 
         binding.btnRejectData.setOnClickListener(v -> {
-            new Thread(() -> rejectFileFromSocket()).start();
+            new Thread(TcpServer::rejectFileFromSocket).start();
         });
         binding.btnAcceptData.setOnClickListener(v -> {
-            new Thread(() -> {
-                acceptFileFromSocket();
-            }).start();
+            new Thread(TcpServer::acceptFileFromSocket).start();
         });
     }
 
     private void showFilePropertiesInArrival() {
-        FileTransferPacket file = getAcceptedObject();
-        binding.receivingFrom.setText("Receiving from: " + file.getUserName());
-        binding.fileName.setText("File name: " + file.getFileName());
-        binding.fileSize.setText("File Size: " + file.getFileSize());
-        System.out.println("optioinaml messageng: "+ file.getOptionalMessage());
-        binding.receivedMessage.setText(file.getOptionalMessage().isEmpty() ? "" : "Message: " + file.getOptionalMessage());
+        fileInArrival = getAcceptedObject();
+        binding.btnAcceptData.setEnabled(fileInArrival.getFileName() != null && !fileInArrival.getFileName().isEmpty());
+        binding.btnRejectData.setText(binding.btnAcceptData.isEnabled() ? "Reject" : "Disconnect");
+
+        binding.btnAcceptData.setVisibility(binding.btnAcceptData.isEnabled() ? View.VISIBLE : View.GONE);
+        binding.cardView.setVisibility(View.VISIBLE);
+        binding.fileSize.setVisibility(binding.btnAcceptData.isEnabled() ? View.VISIBLE : View.GONE);
+        binding.fileName.setVisibility(binding.btnAcceptData.isEnabled() ? View.VISIBLE : View.GONE);
+
+        binding.receivingFrom.setText("Receiving from: " + fileInArrival.getUserName());
+        binding.fileName.setText((fileInArrival.getFileName().isEmpty() ? "" : "File name: " + fileInArrival.getFileName()));
+        binding.fileSize.setText(fileInArrival.getFileSize() > 0 ? "File Size: " + fileInArrival.getFileSize() : "");
+        binding.receivedMessage.setText(fileInArrival.getOptionalMessage().isEmpty() ? "" : "Message: " + fileInArrival.getOptionalMessage());
     }
 
     private void clearFilePropertiesInArrival() {
@@ -137,9 +143,7 @@ public class ReceiveFragment extends Fragment {
     }
 
     private void startFileTransferServer() {
-        tcpSeverStarterThread = new Thread(() -> {
-            startServerConnection(fileTransferSocket);
-        });
+        tcpSeverStarterThread = new Thread(() -> startServerConnection(fileTransferSocket));
         tcpSeverStarterThread.start();
     }
 

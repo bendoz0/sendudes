@@ -29,48 +29,52 @@ public class TcpClient {
     private OnTransferError transferErrorEvent;
 
     public void sendFileToServer(String IP, int port, Uri uri, String username, String message, Context context) {//TODO: refactor and spilt in multiple function + better error handling (close outputStream in case of errors)
-        FileUtils.FileInfo fileInfoFromUri = getFileInfoFromUri(context, uri);
+        FileUtils.FileInfo fileInfoFromUri = null;
+
+        if (uri != null) fileInfoFromUri = getFileInfoFromUri(context, uri);
         try {
             Socket socket = new Socket(IP, port);
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            FileTransferPacket data = new FileTransferPacket(username, fileInfoFromUri.name, fileInfoFromUri.size, message);
+            FileTransferPacket data = new FileTransferPacket(username, fileInfoFromUri != null ? fileInfoFromUri.name : "", fileInfoFromUri != null ? fileInfoFromUri.size : 0, message);
             out.println(FileTransferPacket.toJson(data));
 
             String response = in.readLine();
             System.out.println("Server says: " + response);
 
             //Condizione che viene eseguita quando il server ritorna "ACCEPT
-            if (response.equals(MSG_ACCEPT_CLIENT)) {
-                BufferedOutputStream socketOutputStream = new BufferedOutputStream(socket.getOutputStream());
+            if (response != null) {
+                if (response.equals(MSG_ACCEPT_CLIENT)) {
+                    BufferedOutputStream socketOutputStream = new BufferedOutputStream(socket.getOutputStream());
 
-                InputStream fileInputStream = getFileInputStreamFromURI(context, uri);
-                if (fileInputStream == null) {
-                    throw new IOException("ERROR OPENING FILE");
+                    InputStream fileInputStream = getFileInputStreamFromURI(context, uri);
+                    if (fileInputStream == null) {
+                        throw new IOException("ERROR OPENING FILE");
+                    }
+                    int bytesToSend, totalBytesSent = 0;
+                    byte[] buffer = new byte[16 * 1024];
+                    while ((bytesToSend = fileInputStream.read(buffer)) != -1) {
+                        socketOutputStream.write(buffer, 0, bytesToSend);
+                        socketOutputStream.flush();
+                        totalBytesSent += bytesToSend;
+                        double progress = ((double) totalBytesSent / (double) (fileInfoFromUri.size) * 100);
+                        Log.d("FILE TRANSFER", "Progress:" + String.format("%.0f", progress) + "%");
+                    }
+
+                    fileInputStream.close();
+                    String fileTransferEnd = in.readLine();//Receive the message after transfering the file
+
+                    if (fileTransferEnd != null && fileTransferEnd.equals(MSG_FILETRANSFER_FINISHED)) {
+                        if (transferSuccessfulEvent != null)
+                            transferSuccessfulEvent.onTransferFinished();
+                    }
+
+                } else if (response.equals(MSG_BUSY_CLIENT)) {
+                    Log.d("BUSYYYYYYYYYYYY", "BUSYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY");
+                    if (connectionBusyEvent != null) connectionBusyEvent.onConnectionBusy();
                 }
-                int bytesToSend, totalBytesSent = 0;
-                byte[] buffer = new byte[16 * 1024];
-                while ((bytesToSend = fileInputStream.read(buffer)) != -1) {
-                    socketOutputStream.write(buffer, 0, bytesToSend);
-                    socketOutputStream.flush();
-                    totalBytesSent += bytesToSend;
-                    double progress = ((double)totalBytesSent/(double) (fileInfoFromUri.size)  * 100);
-                    Log.d("FILE TRANSFER", "Progress:" + String.format("%.0f", progress) + "%");
-                }
-
-                fileInputStream.close();
-                String fileTransferEnd = in.readLine();//Receive the message after transfering the file
-
-                if (fileTransferEnd != null && fileTransferEnd.equals(MSG_FILETRANSFER_FINISHED)) {
-                    if (transferSuccessfulEvent != null)
-                        transferSuccessfulEvent.onTransferFinished();
-                }
-
-            } else if (response.equals(MSG_BUSY_CLIENT)) {
-                Log.d("BUSYYYYYYYYYYYY", "BUSYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY");
-                if (connectionBusyEvent != null) connectionBusyEvent.onConnectionBusy();
             }
             socket.close();
         } catch (IOException e) {

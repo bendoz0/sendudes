@@ -9,6 +9,8 @@ import static it.startup.sendudes.utils.files_utils.PermissionHandler.askForFile
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,7 +22,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-
 
 
 import java.io.IOException;
@@ -99,7 +100,7 @@ public class SendFragment extends Fragment {
         binding.btnSend.setEnabled(false);
         binding.twUserIp.setText(username);
         binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
-
+        isOptionalMessageFieldEmpty();
         binding.btnNetworkScanner.setOnClickListener(v -> {
             binding.btnNetworkScanner.setEnabled(false);
 
@@ -258,10 +259,31 @@ public class SendFragment extends Fragment {
                 Toast.makeText(getContext(), "Nessun file selezionato", Toast.LENGTH_SHORT).show();
             });
 
+    public void isOptionalMessageFieldEmpty() {
+        binding.optionalMessage.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updateSendBtnState();
+            }
+        });
+    }
+
     public void updateSendBtnState() {
         requireActivity().runOnUiThread(() -> {
             binding.fileChosen.setText((selectedFileUri != null ? "File scelto: " + FileUtils.getFileInfoFromUri(getContext(), selectedFileUri).name : "Nessun file selezionato"));
-            binding.btnSend.setEnabled(selectedFileUri != null && selectedIp != null && !selectedIp.isEmpty());
+            boolean isOptionalMessageValid = !binding.optionalMessage.getText().toString().isEmpty();
+            boolean isFileUriValid = selectedFileUri != null;
+            boolean isIpValid = selectedIp != null && !selectedIp.isEmpty();
+
+            binding.btnSend.setEnabled((isOptionalMessageValid || isFileUriValid) && isIpValid);
         });
     }
 }
