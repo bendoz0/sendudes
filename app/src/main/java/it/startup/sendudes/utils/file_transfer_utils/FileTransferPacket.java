@@ -30,6 +30,10 @@ public class FileTransferPacket {
         return userName;
     }
 
+    public String getOptionalMessage() {
+        return optionalMessage;
+    }
+
     public String getFileName() {
         return fileName;
     }

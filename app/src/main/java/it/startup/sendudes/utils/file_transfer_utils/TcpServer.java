@@ -1,12 +1,11 @@
 package it.startup.sendudes.utils.file_transfer_utils;
 
-import android.content.Context;
+
 import android.os.Environment;
 import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +34,6 @@ public class TcpServer {
     private static OnClientConnected actionOnClientConnect;
     private static OnClientDisconnect actionOnClientDisconnect;
     private static FileTransferPacket fileDetails;
-
     private static boolean connectionOccupied = false;
 
     public static void startServerConnection(ServerSocket serverSocket) {//TODO: refactor
@@ -141,7 +139,7 @@ public class TcpServer {
         }
     }
 
-    public static String getAcceptedData() {
-        return acceptedData;
+    public static FileTransferPacket getAcceptedObject() {
+        return fileDetails;
     }
 }

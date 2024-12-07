@@ -2,8 +2,7 @@ package it.startup.sendudes.ui.receive;
 
 import static it.startup.sendudes.utils.IConstants.*;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.acceptFileFromSocket;
-import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.getAcceptedData;
-import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.getConnectedClient;
+import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.getAcceptedObject;
 
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.rejectFileFromSocket;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionOnClientConnect;
@@ -27,6 +26,7 @@ import java.net.ServerSocket;
 import java.util.Objects;
 
 import it.startup.sendudes.databinding.FragmentReceiveBinding;
+import it.startup.sendudes.utils.file_transfer_utils.FileTransferPacket;
 import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
 
 public class ReceiveFragment extends Fragment {
@@ -72,8 +72,7 @@ public class ReceiveFragment extends Fragment {
             requireActivity().runOnUiThread(() -> {
                 binding.btnAcceptData.setEnabled(true);
                 binding.btnRejectData.setEnabled(true);
-                binding.receivedData.setText(getAcceptedData());
-                binding.receiveTtile.setText(getConnectedClient());
+                showFilePropertiesInArrival();
             });
         });
 
@@ -82,7 +81,7 @@ public class ReceiveFragment extends Fragment {
                 binding.btnAcceptData.setEnabled(false);
                 binding.btnRejectData.setEnabled(false);
                 Toast.makeText(getContext(), "User disconnected", Toast.LENGTH_SHORT).show();
-                binding.receiveTtile.setText("User Disconnected");
+                clearFilePropertiesInArrival();
             });
         });
 
@@ -92,10 +91,26 @@ public class ReceiveFragment extends Fragment {
         binding.btnAcceptData.setOnClickListener(v -> {
             new Thread(() -> {
                 acceptFileFromSocket();
-                Log.d("FILE ACCEPTED", "FILE CONTAINS: " + binding.receivedData.getText());
             }).start();
         });
     }
+
+    private void showFilePropertiesInArrival() {
+        FileTransferPacket file = getAcceptedObject();
+        binding.receivingFrom.setText("Receiving from: " + file.getUserName());
+        binding.fileName.setText("File name: " + file.getFileName());
+        binding.fileSize.setText("File Size: " + file.getFileSize());
+        System.out.println("optioinaml messageng: "+ file.getOptionalMessage());
+        binding.receivedMessage.setText(file.getOptionalMessage().isEmpty() ? "" : "Message: " + file.getOptionalMessage());
+    }
+
+    private void clearFilePropertiesInArrival() {
+        binding.receivingFrom.setText("User disconnected");
+        binding.fileName.setText("");
+        binding.fileSize.setText("");
+        binding.receivedMessage.setText("");
+    }
+
 
     @Override
     public void onStop() {
