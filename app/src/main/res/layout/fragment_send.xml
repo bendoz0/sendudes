@@ -68,6 +68,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toTopOf="@+id/fileChosen"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -77,6 +78,8 @@
     <TextView
         android:id="@+id/fileChosen"
         android:layout_width="wrap_content"
+        android:maxWidth="240dp"
+        app:flow_wrapMode="aligned"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:background="@drawable/rounded_background"
@@ -92,12 +95,13 @@
         android:id="@+id/optionalMessage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_margin="16dp"
         android:layout_marginBottom="16dp"
         android:autofillHints="Hi"
         android:background="@drawable/rounded_edittext_background"
         android:hint="Enter your text here"
         android:inputType="text"
-        android:layout_margin="16dp"
+        android:minHeight="48dp"
         android:padding="12dp"
         android:textColor="@android:color/white"
         android:textSize="16sp"
@@ -109,7 +113,6 @@
         android:id="@+id/bottomBtns"
         android:layout_width="wrap_content"
         android:layout_height="169dp"
-        android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         android:gravity="center"
         android:orientation="horizontal"
@@ -130,5 +133,15 @@
             android:layout_marginStart="16dp"
             android:text="@string/send_file" />
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/selectedFileThumbnail"
+        android:layout_width="82dp"
+        android:layout_height="82dp"
+        app:layout_constraintBottom_toTopOf="@+id/optionalMessage"
+        app:layout_constraintEnd_toStartOf="@+id/fileChosen"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/found_ips"
+        tools:src="@tools:sample/avatars" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
