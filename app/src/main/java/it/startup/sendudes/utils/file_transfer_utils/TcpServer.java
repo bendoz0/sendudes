@@ -90,42 +90,73 @@ public class TcpServer {
         closeConnections();
     }
 
-    static public void acceptFileFromSocket() {//TODO: refactor and spilt in multiple function + better error handling (close outputStream in case of errors)
+
+
+
+    static public void acceptFileFromSocket() {
+        out.println(MSG_ACCEPT_CLIENT);
         try {
-            out.println(MSG_ACCEPT_CLIENT);
-
+            //filePath rappresenta il percorso di salvataggio del file
+            String filePath = prepareFilePath();
             int fileSize = (int) fileDetails.getFileSize(); // Expected file size
-
-            int nTotalRead = 0; // Tracks the total bytes read
-            int nBytesRead;
-            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            String path = dir.getPath() + "/" + fileDetails.getFileName();
-            File file = new File(path);
-
-            if (!file.exists()) {
-                file.createNewFile();
-                FileOutputStream fos = new FileOutputStream(file, true);
-                // Reading raw bytes from the input stream
-                InputStream socketInputStream = clientSocket.getInputStream();
-                byte[] bytesReceived = new byte[16 * 1024];
-                while (nTotalRead < fileSize) {
-                    nBytesRead = socketInputStream.read(bytesReceived);
-                    if (nBytesRead == -1) {
-                        break;
-                    }
-                    fos.write(bytesReceived, 0, nBytesRead);
-                    fos.flush();
-                    nTotalRead += nBytesRead;
-                    double progress = ((double) nTotalRead / (double) fileSize) * 100;
-                    Log.d("FILE TRANSFER", "Progress:" + String.format("%.0f", progress) + "%");
-                }
-                out.println(MSG_FILETRANSFER_FINISHED);
-                fos.close();
-            }
+            //chiamata del metodo per il trasferimento del file
+            transferFile(clientSocket.getInputStream(), filePath, fileSize);
+            out.println(MSG_FILETRANSFER_FINISHED);
         } catch (Exception e) {
-            Log.d("BYTE READING ERR", "Error receiving file: " + e.getMessage());
+            Log.d("FILE TRANSFER ERROR", "Error during file transfer: " + e.getMessage());
+        } finally {
+            closeConnections();
         }
-        closeConnections();
+    }
+
+    //metodo per gestire la creazione del file
+    private static String prepareFilePath() throws IOException {
+        //percorso della directory del download
+        File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        //costruzione del percorso completo del file
+        String path = dir.getPath() + "/" + fileDetails.getFileName();
+        File file = new File(path);
+
+        if (!file.exists()) {
+            if (!file.createNewFile()) {
+                throw new IOException("Failed to create file: " + path);
+            }
+        }
+        return path;
+    }
+
+    //metodo per gestire il trasferimento del file
+    private static void transferFile(InputStream socketInputStream, String filePath, int fileSize) {
+        int nTotalRead = 0;  // Tracks the total bytes read
+        int nBytesRead;      //variabile per tracciare i byte letti ad ogni ciclo
+        byte[] buffer = new byte[16 * 1024];
+
+        //funzionalità try-with-resources per chiudere automaticamente le risorse FileOutputStream
+        //chiude la risorsa quando si esce dal ciclo sia in caso positivo che negativo
+        try (FileOutputStream fos = new FileOutputStream(filePath, true)) {
+            //ciclo per leggere i byte dal socket fino al totale
+            while (nTotalRead < fileSize) {
+                nBytesRead = socketInputStream.read(buffer);
+                if (nBytesRead == -1) {
+                    throw new IOException("Unexpected end of stream");
+                }
+                //scrittura dei byte letti nel file
+                fos.write(buffer, 0, nBytesRead);
+
+                //assicuro che vengono scritti tutti
+                fos.flush();
+
+                //aggiorno i byte letti
+                nTotalRead += nBytesRead;
+
+                //calcolo la percentuale per terminare
+                double progress = ((double) nTotalRead / (double) fileSize) * 100;
+                Log.d("FILE TRANSFER", "Progress: " + String.format("%.0f", progress) + "%");
+            }
+        } catch (IOException e) {
+            Log.e("FILE TRANSFER ERROR", "Error during file transfer: " + e.getMessage());
+            throw new RuntimeException("File transfer failed", e);
+        }
     }
 
     public static void closeConnections() {

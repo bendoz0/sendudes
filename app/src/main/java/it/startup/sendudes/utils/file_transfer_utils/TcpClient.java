@@ -28,60 +28,85 @@ public class TcpClient {
     private OnTransferSuccessfull transferSuccessfulEvent;
     private OnTransferError transferErrorEvent;
 
-    public void sendFileToServer(String IP, int port, Uri uri, String username, String message, Context context) {//TODO: refactor and spilt in multiple function + better error handling (close outputStream in case of errors)
+    //gestisce la connessione con il server, l'inizio dell'invio del pacchetto e getisce la risposta del server
+    public void sendFileToServer(String IP, int port, Uri uri, String username, String message, Context context) {
         FileUtils.FileInfo fileInfoFromUri = null;
 
         if (uri != null) fileInfoFromUri = getFileInfoFromUri(context, uri);
-        try {
-            Socket socket = new Socket(IP, port);
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        //funzionalità try-with-resources per chiudere automaticamente le risorse: Socket, PrintWriter e BufferedReader
+        //chiude la risorsa quando si esce dal ciclo sia in caso positivo che negativo
+        try (Socket socket = new Socket(IP, port);
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
-            FileTransferPacket data = new FileTransferPacket(username, fileInfoFromUri != null ? fileInfoFromUri.name : "", fileInfoFromUri != null ? fileInfoFromUri.size : 0, message);
+            // Creazione e invio del pacchetto di trasferimento del file
+            // Creazione di un oggetto che ha come parametri: username, nome del file, grandezza del file e un messaggio
+            FileTransferPacket data = new FileTransferPacket(username,
+                    fileInfoFromUri != null ? fileInfoFromUri.name : "",
+                    fileInfoFromUri != null ? fileInfoFromUri.size : 0,
+                    message);
             out.println(FileTransferPacket.toJson(data));
 
             String response = in.readLine();
             System.out.println("Server says: " + response);
 
-            //Condizione che viene eseguita quando il server ritorna "ACCEPT
+            // Verifica della risposta del server
             if (response != null) {
                 if (response.equals(MSG_ACCEPT_CLIENT)) {
-                    BufferedOutputStream socketOutputStream = new BufferedOutputStream(socket.getOutputStream());
-
-                    InputStream fileInputStream = getFileInputStreamFromURI(context, uri);
-                    if (fileInputStream == null) {
-                        throw new IOException("ERROR OPENING FILE");
-                    }
-                    int bytesToSend, totalBytesSent = 0;
-                    byte[] buffer = new byte[16 * 1024];
-                    while ((bytesToSend = fileInputStream.read(buffer)) != -1) {
-                        socketOutputStream.write(buffer, 0, bytesToSend);
-                        socketOutputStream.flush();
-                        totalBytesSent += bytesToSend;
-                        double progress = ((double) totalBytesSent / (double) (fileInfoFromUri.size) * 100);
-                        Log.d("FILE TRANSFER", "Progress:" + String.format("%.0f", progress) + "%");
-                    }
-
-                    fileInputStream.close();
-                    String fileTransferEnd = in.readLine();//Receive the message after transfering the file
-
-                    if (fileTransferEnd != null && fileTransferEnd.equals(MSG_FILETRANSFER_FINISHED)) {
-                        if (transferSuccessfulEvent != null)
-                            transferSuccessfulEvent.onTransferFinished();
-                    }
-
+                    transferFile(socket, in, context, uri, fileInfoFromUri);
                 } else if (response.equals(MSG_BUSY_CLIENT)) {
-                    Log.d("BUSYYYYYYYYYYYY", "BUSYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY");
-                    if (connectionBusyEvent != null) connectionBusyEvent.onConnectionBusy();
+                    handleServerBusy();
                 }
             }
-            socket.close();
+
         } catch (IOException e) {
             System.err.println(e.getMessage());
             if (transferErrorEvent != null) transferErrorEvent.OnTransferFailed();
         }
     }
+
+    // Metodo per gestire il trasferimento del file
+    private void transferFile(Socket socket, BufferedReader in, Context context, Uri uri, FileUtils.FileInfo fileInfoFromUri) throws IOException {
+        try (BufferedOutputStream socketOutputStream = new BufferedOutputStream(socket.getOutputStream());
+             InputStream fileInputStream = getFileInputStreamFromURI(context, uri)) {
+
+            if (fileInputStream == null) {
+                throw new IOException("ERROR OPENING FILE");
+            }
+
+            int bytesToSend, totalBytesSent = 0;
+            byte[] buffer = new byte[16 * 1024];
+
+            // Trasferimento del file al server
+            while ((bytesToSend = fileInputStream.read(buffer)) != -1) {
+                socketOutputStream.write(buffer, 0, bytesToSend);
+                socketOutputStream.flush();
+                totalBytesSent += bytesToSend;
+                double progress = ((double) totalBytesSent / (double) fileInfoFromUri.size) * 100;
+                Log.d("FILE TRANSFER", "Progress:" + String.format("%.0f", progress) + "%");
+            }
+
+            // Lettura del messaggio di fine trasferimento dal server
+            String fileTransferEnd = in.readLine();
+            if (fileTransferEnd != null && fileTransferEnd.equals(MSG_FILETRANSFER_FINISHED)) {
+                if (transferSuccessfulEvent != null)
+                    transferSuccessfulEvent.onTransferFinished();
+            }
+
+        } catch (IOException e) {
+            System.err.println("Error during file transfer: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    // Metodo per gestire la risposta quando il server è occupato
+    private void handleServerBusy() {
+        Log.d("BUSY CLIENT", "Server is busy, try again later.");
+        if (connectionBusyEvent != null) connectionBusyEvent.onConnectionBusy();
+    }
+
+
 
     //Event triggered when the file has been sent successfully
     public void setTransferSuccessfullEvent(OnTransferSuccessfull transferSuccessfullEvent) {
