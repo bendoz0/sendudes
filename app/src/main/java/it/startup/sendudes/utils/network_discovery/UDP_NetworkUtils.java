@@ -98,20 +98,25 @@ public class UDP_NetworkUtils {
         switch (arrayedMsg[1]) {
             case MSG_CLIENT_PING:
                 broadcast(MSG_CLIENT_RECEIVING);
-
                 break;
+
             case MSG_CLIENT_NOT_RECEIVING:
                 foundIps.remove(ip);
                 Log.d("RECEIVED PACKET", "handleReceivedPacket: REMOVED IP");
                 _triggerListUpdateEvent();
                 break;
+
             case MSG_CLIENT_RECEIVING:
+                //TODO: da testare questa condizione al posto di quella presente " !foundIps.containsKey(ip) " per visualizzare il dispoditivo che fa hotspot
                 if (!ip.contains(arrayedMsg[0])) {
                     System.out.println("ADDED NEW IP: " + arrayedMsg[0]+ ip);
                     foundIps.put(ip, arrayedMsg[0]);
                     _triggerListUpdateEvent();
                 }
                 break;
+
+            default:
+                Log.d("RECIVED PACKET", "handleReceivedPacket: UNKNOWN MESSAGE " +msg);
         }
     }
 

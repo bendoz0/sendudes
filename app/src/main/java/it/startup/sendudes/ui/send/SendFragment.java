@@ -141,6 +141,7 @@ public class SendFragment extends Fragment {
 
                     ArrayAdapter<String> ipListContent = getIpListAdapter(scannedIPs);
                     binding.foundIps.setAdapter(ipListContent);
+                    ipListContent.notifyDataSetChanged(); //per aggiornare costantemente
                     binding.btnSend.setEnabled(false);
                     ipListContent.notifyDataSetChanged();
 
