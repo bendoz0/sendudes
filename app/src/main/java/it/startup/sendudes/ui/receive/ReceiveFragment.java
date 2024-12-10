@@ -7,6 +7,7 @@ import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionO
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionOnClientDisconnect;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.startServerConnection;
 import static it.startup.sendudes.utils.files_utils.PermissionHandler.askForFilePermission;
+import static it.startup.sendudes.utils.network_discovery.NetworkUtils.readableFileSize;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -103,7 +104,7 @@ public class ReceiveFragment extends Fragment {
 
         binding.receivingFrom.setText("Receiving from: " + fileInArrival.getUserName());
         binding.fileName.setText((fileInArrival.getFileName().isEmpty() ? "" : "File name: " + fileInArrival.getFileName()));
-        binding.fileSize.setText(fileInArrival.getFileSize() > 0 ? "File Size: " + fileInArrival.getFileSize() : "");
+        binding.fileSize.setText(fileInArrival.getFileSize() > 0 ? "File Size: " + readableFileSize(fileInArrival.getFileSize()) : "");
         binding.receivedMessage.setText(fileInArrival.getOptionalMessage().isEmpty() ? "" : "Message: " + fileInArrival.getOptionalMessage());
     }
 
