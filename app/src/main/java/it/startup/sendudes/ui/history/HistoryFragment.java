@@ -72,15 +72,6 @@ public class HistoryFragment extends Fragment {
         return adapter;
     }
 
-    private String getImg(String fileName){
-        String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + fileName;
-        File f = new File(path);
-        if (f.exists()){
-            return "preview available";
-        }
-        return "preview unavailable";
-    }
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
