@@ -1,4 +1,4 @@
-package it.startup.sendudes.ui.settings;
+package it.startup.sendudes.ui.history;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

@@ -1,4 +1,4 @@
-package it.startup.sendudes.ui.settings;
+package it.startup.sendudes.ui.history;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
