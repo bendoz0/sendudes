@@ -7,11 +7,14 @@ import static it.startup.sendudes.utils.IConstants.username;
 import static it.startup.sendudes.utils.files_utils.PermissionHandler.askForFilePermission;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.CancellationSignal;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +30,7 @@ import androidx.fragment.app.Fragment;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentSendBinding;
@@ -279,12 +283,38 @@ public class SendFragment extends Fragment {
 
     public void updateSendBtnState() {
         requireActivity().runOnUiThread(() -> {
+
             binding.fileChosen.setText((selectedFileUri != null ? "File scelto: " + FileUtils.getFileInfoFromUri(getContext(), selectedFileUri).name : "Nessun file selezionato"));
+            loadSelectedFileThumbnail();
             boolean isOptionalMessageValid = !binding.optionalMessage.getText().toString().isEmpty();
             boolean isFileUriValid = selectedFileUri != null;
             boolean isIpValid = selectedIp != null && !selectedIp.isEmpty();
 
             binding.btnSend.setEnabled((isOptionalMessageValid || isFileUriValid) && isIpValid);
         });
+    }
+
+    private void loadSelectedFileThumbnail() {
+        if (!binding.fileChosen.getText().toString().equalsIgnoreCase("Nessun file selezionato")) {
+            try {
+                Size mSize = new Size(105, 105);
+                CancellationSignal ca = new CancellationSignal();
+                Bitmap bitmapThumbnail = requireActivity().getContentResolver().loadThumbnail(selectedFileUri, mSize, ca);
+                System.out.println("THUMBNAIL: " + bitmapThumbnail);
+
+                binding.selectedFileThumbnail.setImageBitmap(bitmapThumbnail);
+            } catch (Exception e) {
+                System.out.println("ERROR CREATING THUMBNAIL: " + e.getMessage());
+                if (Objects.requireNonNull(e.getMessage()).contains("audio")) {
+                    loadAudioFileThumbnail();
+                }
+            }
+        }
+    }
+
+    private void loadAudioFileThumbnail() {
+        binding.selectedFileThumbnail.setImageResource(R.drawable.headphones_24px);
+        binding.selectedFileThumbnail.setMaxWidth(42);
+        binding.selectedFileThumbnail.setMaxHeight(42);
     }
 }
