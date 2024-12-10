@@ -99,7 +99,7 @@ public class TcpClient {
                     db = new FilesDbAdapter(context).open();
                     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
                     LocalDateTime dateNow = LocalDateTime.now();
-                    long outcome = db.createFileRow(fileInfoFromUri.name, "" + NetworkUtils.readableFileSize(fileInfoFromUri.size), dtf.format(dateNow), 1);
+                    long outcome = db.createFileRow(fileInfoFromUri.name, "" + NetworkUtils.readableFileSize(fileInfoFromUri.size), dtf.format(dateNow), 1, uri.getPath());
                     if (outcome == -1) Log.d("INSERT INTO", "ERROOORRRRRRRRREEEEEE");
                     db.close();
                     transferSuccessfulEvent.onTransferFinished();

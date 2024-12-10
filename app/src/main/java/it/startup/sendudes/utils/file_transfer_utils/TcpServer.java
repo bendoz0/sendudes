@@ -113,7 +113,7 @@ public class TcpServer {
             db = new FilesDbAdapter(context).open();
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
             LocalDateTime dateNow = LocalDateTime.now();
-            long outcome = db.createFileRow(fileDetails.getFileName(), "" + NetworkUtils.readableFileSize(fileDetails.getFileSize()), dtf.format(dateNow), 0);
+            long outcome = db.createFileRow(fileDetails.getFileName(), "" + NetworkUtils.readableFileSize(fileDetails.getFileSize()), dtf.format(dateNow), 0, filePath);
             if (outcome == -1) Log.d("INSERT INTO", "ERROOORRRRRRRRREEEEEE");
 
             out.println(MSG_FILETRANSFER_FINISHED);
