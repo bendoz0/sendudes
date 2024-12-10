@@ -12,7 +12,7 @@
         android:title="@string/title_receive" />
 
     <item
-        android:id="@+id/navigation_settings"
+        android:id="@+id/navigation_history"
         android:icon="@drawable/ic_history_black"
         android:title="@string/title_settings" />
 

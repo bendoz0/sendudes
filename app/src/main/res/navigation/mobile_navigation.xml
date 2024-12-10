@@ -18,7 +18,7 @@
         tools:layout="@layout/fragment_receive" />
 
     <fragment
-        android:id="@+id/navigation_settings"
+        android:id="@+id/navigation_history"
         android:name="it.startup.sendudes.ui.settings.SettingsFragment"
         android:label="@string/title_settings"
         tools:layout="@layout/fragment_settings" />
