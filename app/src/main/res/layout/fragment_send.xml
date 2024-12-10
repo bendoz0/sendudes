@@ -82,6 +82,7 @@
         android:layout_marginBottom="16dp"
         android:background="@drawable/rounded_background"
         android:maxWidth="240dp"
+        android:text="Select a file"
         android:padding="8dp"
         android:textAlignment="center"
         android:textColor="@android:color/white"

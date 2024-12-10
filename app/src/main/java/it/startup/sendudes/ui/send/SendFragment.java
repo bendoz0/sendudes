@@ -142,8 +142,12 @@ public class SendFragment extends Fragment {
                     return;
                 }
                 if (scannedIPs.isEmpty()) {
-                    binding.scannedMsg.setVisibility(View.VISIBLE);
-                    binding.foundIps.setVisibility(View.GONE);
+                    try {
+                        binding.scannedMsg.setVisibility(View.VISIBLE);
+                        binding.foundIps.setVisibility(View.GONE);
+                    }catch (Exception e){
+                        System.out.println(e.getMessage());
+                    }
                     Log.d("SCANNED USERS: ", "NO USER FOUND");
                 } else {
                     binding.scannedMsg.setVisibility(View.GONE);
@@ -208,6 +212,8 @@ public class SendFragment extends Fragment {
                     if (udpHandler != null) {
                         udpHandler.scanNetwork();
                     }
+
+                    Thread.sleep(2000);
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
