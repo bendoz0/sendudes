@@ -37,6 +37,7 @@ public class TcpServer {
     private static boolean connectionOccupied = false;
 
     public static void startServerConnection(ServerSocket serverSocket) {//TODO: refactor
+        if (serverSocket == null) return;
         while (!serverSocket.isClosed()) {
             try {
 //                serverSocket = new ServerSocket(port);

@@ -118,25 +118,21 @@ public class ReceiveFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-
-        if (tcpSeverStarterThread != null && tcpSeverStarterThread.isAlive())
-            tcpSeverStarterThread.interrupt();
-        if (!fileTransferSocket.isClosed()) {
-            try {
-                fileTransferSocket.close();
-            } catch (IOException e) {
-                System.out.println(e.getMessage());
+        if (udpHandler != null) {
+            for (int i = 0; i < 10; i++) {
+                udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
             }
         }
-        udpHandler.closeSockets();
+        if (tcpSeverStarterThread != null && tcpSeverStarterThread.isAlive())
+            tcpSeverStarterThread.interrupt();
+        try {
+            if (!fileTransferSocket.isClosed()) {
+                fileTransferSocket.close();
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        if (udpHandler != null) udpHandler.closeSockets();
     }
 
     private void startFileTransferServer() {

@@ -75,18 +75,18 @@
         app:layout_constraintTop_toBottomOf="@+id/scannedMsg"
         tools:listitem="@android:layout/simple_list_item_1" />
 
-    <TextView
+    <Button
         android:id="@+id/fileChosen"
         android:layout_width="wrap_content"
-        android:maxWidth="240dp"
-        app:flow_wrapMode="aligned"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:background="@drawable/rounded_background"
+        android:maxWidth="240dp"
         android:padding="8dp"
         android:textAlignment="center"
         android:textColor="@android:color/white"
         android:textSize="16sp"
+        app:flow_wrapMode="aligned"
         app:layout_constraintBottom_toTopOf="@+id/optionalMessage"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -112,7 +112,7 @@
     <LinearLayout
         android:id="@+id/bottomBtns"
         android:layout_width="wrap_content"
-        android:layout_height="169dp"
+        android:layout_height="150dp"
         android:layout_marginBottom="16dp"
         android:gravity="center"
         android:orientation="horizontal"
@@ -121,23 +121,16 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <Button
-            android:id="@+id/btn_pick_file"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/click_file" />
-
-        <Button
             android:id="@+id/btnSend"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:text="@string/send_file" />
     </LinearLayout>
 
     <ImageView
         android:id="@+id/selectedFileThumbnail"
-        android:layout_width="82dp"
-        android:layout_height="82dp"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
         app:layout_constraintBottom_toTopOf="@+id/optionalMessage"
         app:layout_constraintEnd_toStartOf="@+id/fileChosen"
         app:layout_constraintStart_toStartOf="parent"
