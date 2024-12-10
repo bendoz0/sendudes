@@ -51,7 +51,9 @@ public class SendFragment extends Fragment {
     private TcpClient tcpClient;
     private Handler handler;
 
-
+    private ArrayAdapter<String> ipListAdapter;
+    private boolean isScanning = false;
+    private final int SCAN_DURATION_SECONDS = 2;
     View currentlySelectedView = null;
     String selectedIp = null;
 
@@ -67,6 +69,11 @@ public class SendFragment extends Fragment {
         try {
             udpHandler = new UDP_NetworkUtils(PING_PORT, RECEIVE_PORT, username);
             tcpClient = new TcpClient();
+            ipListAdapter = new ArrayAdapter<>(
+                    getContext(),
+                    android.R.layout.simple_dropdown_item_1line,
+                    new ArrayList<>()
+            );
         } catch (IOException e) {
             Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
         }
@@ -93,6 +100,7 @@ public class SendFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
+        isScanning = false;
         if (handler != null) handler.removeCallbacksAndMessages(null);
         if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
             broadcastHandshakeThread.interrupt();
@@ -113,7 +121,8 @@ public class SendFragment extends Fragment {
             public void run() {
                 if (udpHandler != null) {
                     udpHandler.broadcast(MSG_CLIENT_PING);
-                    handler.postDelayed(this, 3000);
+//                    TODO:  MAKE IT WORK WITHOUT REFRESHING THE PAGE/FRAGMENT
+//                    handler.postDelayed(this, 3000);
                 }
 
 
@@ -125,7 +134,6 @@ public class SendFragment extends Fragment {
     private void uiActivityStart() {
         binding.btnSend.setEnabled(false);
         binding.twUserIp.setText(username);
-//        binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
         binding.fileChosen.setOnClickListener(v -> onClickChooseFile());
         isOptionalMessageFieldEmpty();
         binding.btnNetworkScanner.setOnClickListener(v -> {
@@ -152,12 +160,11 @@ public class SendFragment extends Fragment {
                 } else {
                     binding.scannedMsg.setVisibility(View.GONE);
                     binding.foundIps.setVisibility(View.VISIBLE);
-
-                    ArrayAdapter<String> ipListContent = getIpListAdapter(scannedIPs);
-                    binding.foundIps.setAdapter(ipListContent);
-                    ipListContent.notifyDataSetChanged(); //per aggiornare costantemente
+                    ipListAdapter = getIpListAdapter(scannedIPs);
+                    binding.foundIps.setAdapter(ipListAdapter);
+                    ipListAdapter.notifyDataSetChanged(); //per aggiornare costantemente
                     binding.btnSend.setEnabled(false);
-                    ipListContent.notifyDataSetChanged();
+                    ipListAdapter.notifyDataSetChanged();
 
 
                     binding.foundIps.setOnItemClickListener((adapterView, view, position, id) -> {
@@ -199,6 +206,8 @@ public class SendFragment extends Fragment {
     }
 
     private void onClickScanNetwork() {
+        if (isScanning) return;
+        isScanning = true;
         binding.btnNetworkScanner.setEnabled(false);
 
         requireActivity().runOnUiThread(() -> {
@@ -208,16 +217,18 @@ public class SendFragment extends Fragment {
 
         new Thread(() -> {
             try {
-                for (int i = 0; i < 10; i++) {
+                long startTime = System.currentTimeMillis();
+                long endTime = startTime + (SCAN_DURATION_SECONDS * 1000);
+
+                while (System.currentTimeMillis() < endTime && isScanning) {
                     if (udpHandler != null) {
                         udpHandler.scanNetwork();
                     }
-
-                    Thread.sleep(2000);
                 }
             } catch (Exception e) {
-                System.out.println(e.getMessage());
+                Log.e("ScanNetwork", "Error during network scan", e);
             } finally {
+                isScanning = false;
                 requireActivity().runOnUiThread(() -> {
                     binding.btnNetworkScanner.setEnabled(true);
                     binding.scanProgressBar.setVisibility(View.GONE);
