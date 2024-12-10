@@ -1,4 +1,4 @@
-package it.startup.sendudes.ui.settings;
+package it.startup.sendudes.ui.history;
 
 import android.database.Cursor;
 import android.os.Bundle;

@@ -7,8 +7,10 @@ import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionO
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.setActionOnClientDisconnect;
 import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.startServerConnection;
 import static it.startup.sendudes.utils.files_utils.PermissionHandler.askForFilePermission;
+import static it.startup.sendudes.utils.network_discovery.NetworkUtils.readableFileSize;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,8 +40,6 @@ public class ReceiveFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentReceiveBinding.inflate(inflater, container, false);
-
-
         return binding.getRoot();
     }
 
@@ -61,8 +61,6 @@ public class ReceiveFragment extends Fragment {
         startFileTransferServer();
         askForFilePermission(this, () -> {
         });
-
-        udpHandler.broadcast(MSG_CLIENT_RECEIVING);
     }
 
 
@@ -106,7 +104,7 @@ public class ReceiveFragment extends Fragment {
 
         binding.receivingFrom.setText("Receiving from: " + fileInArrival.getUserName());
         binding.fileName.setText((fileInArrival.getFileName().isEmpty() ? "" : "File name: " + fileInArrival.getFileName()));
-        binding.fileSize.setText(fileInArrival.getFileSize() > 0 ? "File Size: " + fileInArrival.getFileSize() : "");
+        binding.fileSize.setText(fileInArrival.getFileSize() > 0 ? "File Size: " + readableFileSize(fileInArrival.getFileSize()) : "");
         binding.receivedMessage.setText(fileInArrival.getOptionalMessage().isEmpty() ? "" : "Message: " + fileInArrival.getOptionalMessage());
     }
 
@@ -121,25 +119,21 @@ public class ReceiveFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-        udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-
-        if (tcpSeverStarterThread != null && tcpSeverStarterThread.isAlive())
-            tcpSeverStarterThread.interrupt();
-        if (!fileTransferSocket.isClosed()) {
-            try {
-                fileTransferSocket.close();
-            } catch (IOException e) {
-                System.out.println(e.getMessage());
+        if (udpHandler != null) {
+            for (int i = 0; i < 10; i++) {
+                udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
             }
         }
-        udpHandler.closeSockets();
+        if (tcpSeverStarterThread != null && tcpSeverStarterThread.isAlive())
+            tcpSeverStarterThread.interrupt();
+        try {
+            if (!fileTransferSocket.isClosed()) {
+                fileTransferSocket.close();
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        if (udpHandler != null) udpHandler.closeSockets();
     }
 
     private void startFileTransferServer() {

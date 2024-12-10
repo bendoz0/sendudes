@@ -1,6 +1,7 @@
 package it.startup.sendudes.ui.send;
 
 import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
+import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.IConstants.username;
@@ -11,6 +12,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -47,6 +49,8 @@ public class SendFragment extends Fragment {
     private UDP_NetworkUtils udpHandler;
     private Uri selectedFileUri;
     private TcpClient tcpClient;
+    private Handler handler;
+
 
     View currentlySelectedView = null;
     String selectedIp = null;
@@ -67,6 +71,7 @@ public class SendFragment extends Fragment {
             Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
         }
         uiActivityStart();
+        broadcastPingEverySecond();
         broadcastHandshaker();
     }
 
@@ -88,6 +93,7 @@ public class SendFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
+        if (handler != null) handler.removeCallbacksAndMessages(null);
         if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
             broadcastHandshakeThread.interrupt();
         if (tcpClientThread != null && tcpClientThread.isAlive()) tcpClientThread.interrupt();
@@ -100,34 +106,38 @@ public class SendFragment extends Fragment {
         binding = null;
     }
 
+    private void broadcastPingEverySecond() {
+        handler = new Handler();
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                if (udpHandler != null) {
+                    udpHandler.broadcast(MSG_CLIENT_PING);
+                    handler.postDelayed(this, 3000);
+                }
+
+
+            }
+        };
+        handler.post(runnable); // Start the initial execution
+    }
+
     private void uiActivityStart() {
         binding.btnSend.setEnabled(false);
         binding.twUserIp.setText(username);
-        binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
+//        binding.btnPickFile.setOnClickListener(v -> onClickChooseFile());
+        binding.fileChosen.setOnClickListener(v -> onClickChooseFile());
         isOptionalMessageFieldEmpty();
         binding.btnNetworkScanner.setOnClickListener(v -> {
-            binding.btnNetworkScanner.setEnabled(false);
-
-            new Thread(() -> {
-                for (int i = 0; i < 32; i++) {
-                    udpHandler.scanNetwork();
-                }
-                binding.btnNetworkScanner.postDelayed(() -> {
-                    binding.btnNetworkScanner.setEnabled(true);
-                    binding.scanProgressBar.setVisibility(View.GONE);
-                    binding.scannedMsg.setText("No user found");
-                }, 2000);
-                requireActivity().runOnUiThread(() -> {
-                    binding.scanProgressBar.setVisibility(View.VISIBLE);
-                    binding.scannedMsg.setText("Loading");
-                });
-            }).start();
+            if (udpHandler != null)
+                onClickScanNetwork();
+            else Toast.makeText(getContext(), "No internet found", Toast.LENGTH_LONG).show();
 
         });
         OnListUpdate updatedList = scannedIPs -> {
             requireActivity().runOnUiThread(() -> {
                 if (scannedIPs == null) {
-                    Toast.makeText(getContext(), "no connection", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "no connection", Toast.LENGTH_SHORT).show();
 
                     return;
                 }
@@ -161,11 +171,8 @@ public class SendFragment extends Fragment {
                 }
             });
         };
-        try {
-            udpHandler.onListUpdate(updatedList);
-        } catch (Exception e) {
-            Toast.makeText(getContext(), "no connection", Toast.LENGTH_LONG).show();
-        }
+        if (udpHandler != null) udpHandler.onListUpdate(updatedList);
+
         binding.btnSend.setOnClickListener(l -> {
             if (binding.btnSend.isEnabled() && selectedIp != null) {
                 TCP_clientThread(selectedIp.split("#", 2)[1]);
@@ -183,8 +190,35 @@ public class SendFragment extends Fragment {
         try {
             tcpStarter();
         } catch (Exception e) {
-            Toast.makeText(getContext(), "no connection", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "no connection", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void onClickScanNetwork() {
+        binding.btnNetworkScanner.setEnabled(false);
+
+        requireActivity().runOnUiThread(() -> {
+            binding.scanProgressBar.setVisibility(View.VISIBLE);
+            binding.scannedMsg.setText("Loading");
+        });
+
+        new Thread(() -> {
+            try {
+                for (int i = 0; i < 10; i++) {
+                    if (udpHandler != null) {
+                        udpHandler.scanNetwork();
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            } finally {
+                requireActivity().runOnUiThread(() -> {
+                    binding.btnNetworkScanner.setEnabled(true);
+                    binding.scanProgressBar.setVisibility(View.GONE);
+                    binding.scannedMsg.setText("No user found");
+                });
+            }
+        }).start();
     }
 
     private void tcpStarter() {
@@ -284,7 +318,7 @@ public class SendFragment extends Fragment {
     public void updateSendBtnState() {
         requireActivity().runOnUiThread(() -> {
 
-            binding.fileChosen.setText((selectedFileUri != null ? "File scelto: " + FileUtils.getFileInfoFromUri(getContext(), selectedFileUri).name : "Nessun file selezionato"));
+            binding.fileChosen.setText((selectedFileUri != null ? "File scelto: " + FileUtils.getFileInfoFromUri(getContext(), selectedFileUri).name : "Select a file"));
             loadSelectedFileThumbnail();
             boolean isOptionalMessageValid = !binding.optionalMessage.getText().toString().isEmpty();
             boolean isFileUriValid = selectedFileUri != null;
@@ -295,7 +329,7 @@ public class SendFragment extends Fragment {
     }
 
     private void loadSelectedFileThumbnail() {
-        if (!binding.fileChosen.getText().toString().equalsIgnoreCase("Nessun file selezionato")) {
+        if (!binding.fileChosen.getText().toString().equalsIgnoreCase("Select a file")) {
             try {
                 Size mSize = new Size(105, 105);
                 CancellationSignal ca = new CancellationSignal();
