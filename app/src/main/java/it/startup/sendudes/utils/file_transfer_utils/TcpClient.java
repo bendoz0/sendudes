@@ -17,7 +17,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
+import it.startup.sendudes.utils.Db.FilesDbAdapter;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnConnectionBusy;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnTransferError;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnTransferSuccessfull;
@@ -27,6 +30,7 @@ public class TcpClient {
     private OnConnectionBusy connectionBusyEvent;
     private OnTransferSuccessfull transferSuccessfulEvent;
     private OnTransferError transferErrorEvent;
+    private FilesDbAdapter db;
 
     //gestisce la connessione con il server, l'inizio dell'invio del pacchetto e getisce la risposta del server
     public void sendFileToServer(String IP, int port, Uri uri, String username, String message, Context context) {
@@ -90,11 +94,18 @@ public class TcpClient {
             // Lettura del messaggio di fine trasferimento dal server
             String fileTransferEnd = in.readLine();
             if (fileTransferEnd != null && fileTransferEnd.equals(MSG_FILETRANSFER_FINISHED)) {
-                if (transferSuccessfulEvent != null)
+                if (transferSuccessfulEvent != null){
+                    db = new FilesDbAdapter(context).open();
+                    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                    LocalDateTime dateNow = LocalDateTime.now();
+                    long outcome = db.createFileRow(fileInfoFromUri.name, "" + fileInfoFromUri.size, dtf.format(dateNow), 1);
+                    if (outcome == -1) Log.d("INSERT INTO", "ERROOORRRRRRRRREEEEEE");
+                    db.close();
                     transferSuccessfulEvent.onTransferFinished();
+                }
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("Error during file transfer: " + e.getMessage());
             throw e;
         }
