@@ -88,7 +88,7 @@ public class ReceiveFragment extends Fragment {
             new Thread(TcpServer::rejectFileFromSocket).start();
         });
         binding.btnAcceptData.setOnClickListener(v -> {
-            new Thread(TcpServer::acceptFileFromSocket).start();
+            new Thread(() -> TcpServer.acceptFileFromSocket(getContext())).start();
         });
     }
 

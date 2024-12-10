@@ -1,7 +1,9 @@
 package it.startup.sendudes.utils.file_transfer_utils;
 
 
+import android.content.Context;
 import android.os.Environment;
+import android.text.NoCopySpan;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -13,6 +15,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import static it.startup.sendudes.utils.IConstants.MSG_ACCEPT_CLIENT;
 import static it.startup.sendudes.utils.IConstants.MSG_BUSY_CLIENT;
@@ -20,8 +24,10 @@ import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_RECEIVING;
 import static it.startup.sendudes.utils.IConstants.MSG_FILETRANSFER_FINISHED;
 import static it.startup.sendudes.utils.IConstants.MSG_REJECT_CLIENT;
 
+import it.startup.sendudes.utils.Db.FilesDbAdapter;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientConnected;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientDisconnect;
+import it.startup.sendudes.utils.network_discovery.NetworkUtils;
 
 public class TcpServer {
     private static String acceptedData;
@@ -35,6 +41,7 @@ public class TcpServer {
     private static OnClientDisconnect actionOnClientDisconnect;
     private static FileTransferPacket fileDetails;
     private static boolean connectionOccupied = false;
+    private static FilesDbAdapter db;
 
     public static void startServerConnection(ServerSocket serverSocket) {//TODO: refactor
         if (serverSocket == null) return;
@@ -94,7 +101,7 @@ public class TcpServer {
 
 
 
-    static public void acceptFileFromSocket() {
+    static public void acceptFileFromSocket(Context context) {
         out.println(MSG_ACCEPT_CLIENT);
         try {
             //filePath rappresenta il percorso di salvataggio del file
@@ -102,6 +109,13 @@ public class TcpServer {
             int fileSize = (int) fileDetails.getFileSize(); // Expected file size
             //chiamata del metodo per il trasferimento del file
             transferFile(clientSocket.getInputStream(), filePath, fileSize);
+
+            db = new FilesDbAdapter(context).open();
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+            LocalDateTime dateNow = LocalDateTime.now();
+            long outcome = db.createFileRow(fileDetails.getFileName(), "" + NetworkUtils.readableFileSize(fileDetails.getFileSize()), dtf.format(dateNow), 0, filePath);
+            if (outcome == -1) Log.d("INSERT INTO", "ERROOORRRRRRRRREEEEEE");
+
             out.println(MSG_FILETRANSFER_FINISHED);
         } catch (Exception e) {
             Log.d("FILE TRANSFER ERROR", "Error during file transfer: " + e.getMessage());

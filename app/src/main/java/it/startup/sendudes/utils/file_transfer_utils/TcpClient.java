@@ -25,6 +25,7 @@ import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnConnectionBusy
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnTransferError;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnTransferSuccessfull;
 import it.startup.sendudes.utils.files_utils.FileUtils;
+import it.startup.sendudes.utils.network_discovery.NetworkUtils;
 
 public class TcpClient {
     private OnConnectionBusy connectionBusyEvent;
@@ -98,7 +99,9 @@ public class TcpClient {
                     db = new FilesDbAdapter(context).open();
                     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
                     LocalDateTime dateNow = LocalDateTime.now();
-                    long outcome = db.createFileRow(fileInfoFromUri.name, "" + fileInfoFromUri.size, dtf.format(dateNow), 1);
+                    // TODO: path added is uri which changes path for different Android API levels (Versions)
+                    // ex. android 12 is /document/primary:ActualPathOfFile
+                    long outcome = db.createFileRow(fileInfoFromUri.name, "" + NetworkUtils.readableFileSize(fileInfoFromUri.size), dtf.format(dateNow), 1, uri.getPath());
                     if (outcome == -1) Log.d("INSERT INTO", "ERROOORRRRRRRRREEEEEE");
                     db.close();
                     transferSuccessfulEvent.onTransferFinished();
