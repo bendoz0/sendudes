@@ -9,6 +9,7 @@ import static it.startup.sendudes.utils.file_transfer_utils.TcpServer.startServe
 import static it.startup.sendudes.utils.files_utils.PermissionHandler.askForFilePermission;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,8 +39,6 @@ public class ReceiveFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentReceiveBinding.inflate(inflater, container, false);
-
-
         return binding.getRoot();
     }
 
@@ -61,8 +60,6 @@ public class ReceiveFragment extends Fragment {
         startFileTransferServer();
         askForFilePermission(this, () -> {
         });
-
-        udpHandler.broadcast(MSG_CLIENT_RECEIVING);
     }
 
 

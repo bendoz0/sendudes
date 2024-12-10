@@ -1,6 +1,8 @@
 package it.startup.sendudes.ui.send;
 
 import static it.startup.sendudes.utils.IConstants.FILE_TRANSFER_PORT;
+import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_PING;
+import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_RECEIVING;
 import static it.startup.sendudes.utils.IConstants.PING_PORT;
 import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.IConstants.username;
@@ -11,6 +13,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -47,6 +50,8 @@ public class SendFragment extends Fragment {
     private UDP_NetworkUtils udpHandler;
     private Uri selectedFileUri;
     private TcpClient tcpClient;
+    private Handler handler;
+
 
     View currentlySelectedView = null;
     String selectedIp = null;
@@ -67,6 +72,7 @@ public class SendFragment extends Fragment {
             Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
         }
         uiActivityStart();
+        brodcastPingEverySecond();
         broadcastHandshaker();
     }
 
@@ -88,6 +94,7 @@ public class SendFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
+        if(handler != null) handler.removeCallbacksAndMessages(null);
         if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
             broadcastHandshakeThread.interrupt();
         if (tcpClientThread != null && tcpClientThread.isAlive()) tcpClientThread.interrupt();
@@ -98,6 +105,18 @@ public class SendFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    private void brodcastPingEverySecond() {
+        handler = new Handler();
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                udpHandler.broadcast(MSG_CLIENT_PING);
+                handler.postDelayed(this, 3000); // Schedule next execution after 1 second
+            }
+        };
+        handler.post(runnable); // Start the initial execution
     }
 
     private void uiActivityStart() {
