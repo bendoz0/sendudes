@@ -22,7 +22,7 @@ public class FilesDbAdapter {
     private static final String KEY_SIZE= "size";
     private static final String KEY_DATE_TIME= "dateTime";
     private static final String KEY_SENT= "sent";
-    private static final String KEY_PATH = "path";
+    private static final String KEY_URI = "uri";
 
     public FilesDbAdapter(Context con){
         this.context = con;
@@ -32,13 +32,13 @@ public class FilesDbAdapter {
         database = dbhelper.getWritableDatabase();
         return this;
     }
-    private ContentValues createFileValues(String name, String size, String dateTime, int sent, String path){
+    private ContentValues createFileValues(String name, String size, String dateTime, int sent, String uri){
         ContentValues values = new ContentValues();
         values.put(KEY_NAME, name);
         values.put(KEY_SIZE, size);
         values.put(KEY_DATE_TIME, dateTime);
         values.put(KEY_SENT, sent);
-        values.put(KEY_PATH, path);
+        values.put(KEY_URI, uri);
 
         return values;
     }
@@ -54,7 +54,7 @@ public class FilesDbAdapter {
             KEY_SIZE,
             KEY_DATE_TIME,
             KEY_SENT,
-            KEY_PATH
+            KEY_URI
         }, null, null, null, null, null);
     }
     public void close() {

@@ -308,6 +308,8 @@ public class SendFragment extends Fragment {
                     Uri fileUri = result.getData().getData();
                     if (fileUri != null) {
                         selectedFileUri = fileUri;
+//                        Toast.makeText(getContext(), selectedFileUri.toString(), Toast.LENGTH_LONG).show();
+                        // debug
                         updateSendBtnState();
                         return;
                     }

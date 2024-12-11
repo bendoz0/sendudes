@@ -1,8 +1,12 @@
 package it.startup.sendudes.ui.history;
 
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.CancellationSignal;
 import android.os.Environment;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +18,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import java.io.File;
+import java.util.Objects;
 
 import it.startup.sendudes.databinding.FragmentHistoryBinding;
 import it.startup.sendudes.utils.Db.FilesDbAdapter;
@@ -59,7 +64,8 @@ public class HistoryFragment extends Fragment {
                             fileDetails += (cursor.getInt(i) == 1 ? "File sent" : "File received") + "\n";
                             break;
                         case 5:
-                            fileDetails += "path: " + cursor.getString(i) + "\n";
+                            fileDetails += "uri: " + cursor.getString(i) + "\n";
+                            loadSelectedFileThumbnail(Uri.parse(cursor.getString(i)));
                             break;
                         default:
                             fileDetails += cursor.getString(i) + "\n";
@@ -70,6 +76,23 @@ public class HistoryFragment extends Fragment {
             } while (cursor.moveToNext());
         }
         return adapter;
+    }
+
+
+    private void loadSelectedFileThumbnail(Uri uri) {
+            try {
+                Size mSize = new Size(105, 105);
+                CancellationSignal ca = new CancellationSignal();
+                Bitmap bitmapThumbnail = requireActivity().getContentResolver().loadThumbnail(uri, mSize, ca);
+                System.out.println("THUMBNAIL: " + bitmapThumbnail);
+
+                binding.debug.setImageBitmap(bitmapThumbnail);
+            } catch (Exception e) {
+                System.out.println("ERROR CREATING THUMBNAIL: " + e.getMessage());
+//                if (Objects.requireNonNull(e.getMessage()).contains("audio")) {
+//                    loadAudioFileThumbnail();
+//                }
+            }
     }
 
     @Override

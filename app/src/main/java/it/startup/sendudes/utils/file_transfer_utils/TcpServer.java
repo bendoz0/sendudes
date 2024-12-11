@@ -1,10 +1,17 @@
 package it.startup.sendudes.utils.file_transfer_utils;
 
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Context;
+import android.database.Cursor;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.NoCopySpan;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -110,11 +117,14 @@ public class TcpServer {
             //chiamata del metodo per il trasferimento del file
             transferFile(clientSocket.getInputStream(), filePath, fileSize);
 
-            db = new FilesDbAdapter(context).open();
-            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-            LocalDateTime dateNow = LocalDateTime.now();
-            long outcome = db.createFileRow(fileDetails.getFileName(), "" + NetworkUtils.readableFileSize(fileDetails.getFileSize()), dtf.format(dateNow), 0, filePath);
-            if (outcome == -1) Log.d("INSERT INTO", "ERROOORRRRRRRRREEEEEE");
+            MediaScannerConnection.scanFile(context, new String[] {filePath}, null, (path, uri) -> {
+                String uriContent = uri.toString();
+                db = new FilesDbAdapter(context).open();
+                DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                LocalDateTime dateNow = LocalDateTime.now();
+                long outcome = db.createFileRow(fileDetails.getFileName(), "" + NetworkUtils.readableFileSize(fileDetails.getFileSize()), dtf.format(dateNow), 0, uriContent);
+                if (outcome == -1) Log.d("INSERT INTO", "ERROOORRRRRRRRREEEEEE");
+            });
 
             out.println(MSG_FILETRANSFER_FINISHED);
         } catch (Exception e) {
