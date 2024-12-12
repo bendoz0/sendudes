@@ -63,11 +63,7 @@ public class FilesCursorAdapter extends CursorAdapter {
         String fSent = cursor.getString(4);
         String uri = cursor.getString(5);
 
-        try{
         holder.fileName.setText(fName);
-        } catch (Exception e){
-            Log.d("EEEEEEEEEE", e.getMessage());
-        }
         holder.fileSize.setText(fSize);
         holder.fileTimeStamp.setText(fTimeStamp);
         holder.fileSent.setText(fSent.equals("1") ? "File Sent" : "File Received");
