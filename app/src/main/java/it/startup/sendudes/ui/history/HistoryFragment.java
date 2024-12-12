@@ -2,15 +2,18 @@ package it.startup.sendudes.ui.history;
 
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Environment;
+import android.util.Log;
 import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -20,7 +23,9 @@ import androidx.lifecycle.ViewModelProvider;
 import java.io.File;
 import java.util.Objects;
 
+import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentHistoryBinding;
+import it.startup.sendudes.utils.Db.FilesCursorAdapter;
 import it.startup.sendudes.utils.Db.FilesDbAdapter;
 
 public class HistoryFragment extends Fragment {
@@ -37,8 +42,13 @@ public class HistoryFragment extends Fragment {
         FilesDbAdapter fda = new FilesDbAdapter(getContext()).open();
 
         Cursor cursor = fda.fetchAllFiles();
-        ArrayAdapter<String> adapter = getFilesAdapter(cursor);
-        binding.historyList.setAdapter(adapter);
+//        ArrayAdapter<String> adapter = getFilesAdapter(cursor);
+//        binding.historyList.setAdapter(adapter);
+        FilesCursorAdapter cursorAdapter = new FilesCursorAdapter(binding.getRoot().getContext(), cursor, getActivity());
+        ListView historyList = binding.historyList;
+//        View v = cursorAdapter.newView(getContext(), cursor, historyList);
+//        cursorAdapter.bindView(v, getContext(), cursor);
+        historyList.setAdapter(cursorAdapter);
         fda.close();
         return root;
     }
@@ -65,7 +75,7 @@ public class HistoryFragment extends Fragment {
                             break;
                         case 5:
                             fileDetails += "uri: " + cursor.getString(i) + "\n";
-                            loadSelectedFileThumbnail(Uri.parse(cursor.getString(i)));
+//                            loadSelectedFileThumbnail(Uri.parse(cursor.getString(i)));
                             break;
                         default:
                             fileDetails += cursor.getString(i) + "\n";
@@ -79,21 +89,21 @@ public class HistoryFragment extends Fragment {
     }
 
 
-    private void loadSelectedFileThumbnail(Uri uri) {
-            try {
-                Size mSize = new Size(105, 105);
-                CancellationSignal ca = new CancellationSignal();
-                Bitmap bitmapThumbnail = requireActivity().getContentResolver().loadThumbnail(uri, mSize, ca);
-                System.out.println("THUMBNAIL: " + bitmapThumbnail);
-
-                binding.debug.setImageBitmap(bitmapThumbnail);
-            } catch (Exception e) {
-                System.out.println("ERROR CREATING THUMBNAIL: " + e.getMessage());
-//                if (Objects.requireNonNull(e.getMessage()).contains("audio")) {
-//                    loadAudioFileThumbnail();
-//                }
-            }
-    }
+//    private void loadSelectedFileThumbnail(Uri uri) {
+//            try {
+//                Size mSize = new Size(105, 105);
+//                CancellationSignal ca = new CancellationSignal();
+//                Bitmap bitmapThumbnail = requireActivity().getContentResolver().loadThumbnail(uri, mSize, ca);
+//                System.out.println("THUMBNAIL: " + bitmapThumbnail);
+//
+//                binding.debug.setImageBitmap(bitmapThumbnail);
+//            } catch (Exception e) {
+//                System.out.println("ERROR CREATING THUMBNAIL: " + e.getMessage());
+////                if (Objects.requireNonNull(e.getMessage()).contains("audio")) {
+////                    loadAudioFileThumbnail();
+////                }
+//            }
+//    }
 
     @Override
     public void onDestroyView() {

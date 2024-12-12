@@ -15,14 +15,14 @@ public class FilesDbAdapter {
     private SQLiteDatabase database;
     private DbHelper dbhelper;
 
-    private static final String DATABASE_TABLE = "files";
+    public static final String DATABASE_TABLE = "files";
 
-    private static final String KEY_FILE_ID = "_id";
-    private static final String KEY_NAME = "name";
-    private static final String KEY_SIZE= "size";
-    private static final String KEY_DATE_TIME= "dateTime";
-    private static final String KEY_SENT= "sent";
-    private static final String KEY_URI = "uri";
+    public static final String KEY_FILE_ID = "_id";
+    public static final String KEY_NAME = "name";
+    public static final String KEY_SIZE= "size";
+    public static final String KEY_DATE_TIME= "dateTime";
+    public static final String KEY_SENT= "sent";
+    public static final String KEY_URI = "uri";
 
     public FilesDbAdapter(Context con){
         this.context = con;
