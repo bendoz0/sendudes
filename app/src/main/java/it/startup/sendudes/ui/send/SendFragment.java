@@ -7,8 +7,11 @@ import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.IConstants.username;
 import static it.startup.sendudes.utils.files_utils.PermissionHandler.askForFilePermission;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -153,7 +156,7 @@ public class SendFragment extends Fragment {
                     try {
                         binding.scannedMsg.setVisibility(View.VISIBLE);
                         binding.foundIps.setVisibility(View.GONE);
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         System.out.println(e.getMessage());
                     }
                     Log.d("SCANNED USERS: ", "NO USER FOUND");
@@ -336,38 +339,13 @@ public class SendFragment extends Fragment {
 
     public void updateSendBtnState() {
         requireActivity().runOnUiThread(() -> {
-
-            binding.fileChosen.setText((selectedFileUri != null ? "File scelto: " + FileUtils.getFileInfoFromUri(getContext(), selectedFileUri).name : "Select a file"));
-            loadSelectedFileThumbnail();
+            binding.fileChosen.setText((selectedFileUri != null ? "FILE: " + FileUtils.getFileInfoFromUri(requireContext(), selectedFileUri).name : "Select a file"));
+            FileUtils.loadFileThumbnail(binding.fileChosen.getText().toString(), selectedFileUri, binding, requireActivity(), 105, 105);
             boolean isOptionalMessageValid = !binding.optionalMessage.getText().toString().isEmpty();
             boolean isFileUriValid = selectedFileUri != null;
             boolean isIpValid = selectedIp != null && !selectedIp.isEmpty();
 
             binding.btnSend.setEnabled((isOptionalMessageValid || isFileUriValid) && isIpValid);
         });
-    }
-
-    private void loadSelectedFileThumbnail() {
-        if (!binding.fileChosen.getText().toString().equalsIgnoreCase("Select a file")) {
-            try {
-                Size mSize = new Size(105, 105);
-                CancellationSignal ca = new CancellationSignal();
-                Bitmap bitmapThumbnail = requireActivity().getContentResolver().loadThumbnail(selectedFileUri, mSize, ca);
-                System.out.println("THUMBNAIL: " + bitmapThumbnail);
-
-                binding.selectedFileThumbnail.setImageBitmap(bitmapThumbnail);
-            } catch (Exception e) {
-                System.out.println("ERROR CREATING THUMBNAIL: " + e.getMessage());
-                if (Objects.requireNonNull(e.getMessage()).contains("audio")) {
-                    loadAudioFileThumbnail();
-                }
-            }
-        }
-    }
-
-    private void loadAudioFileThumbnail() {
-        binding.selectedFileThumbnail.setImageResource(R.drawable.headphones_24px);
-        binding.selectedFileThumbnail.setMaxWidth(42);
-        binding.selectedFileThumbnail.setMaxHeight(42);
     }
 }
