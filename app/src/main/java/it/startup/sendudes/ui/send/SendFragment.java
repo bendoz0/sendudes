@@ -263,8 +263,13 @@ public class SendFragment extends Fragment {
     }
 
     public void TCP_clientThread(String ip) {
-        tcpClientThread = new Thread(() -> tcpClient.sendFileToServer(ip, FILE_TRANSFER_PORT, selectedFileUri, username, binding.optionalMessage.getText().toString(), getContext()));
-        tcpClientThread.start();
+        try{
+            tcpClientThread = new Thread(() -> tcpClient.sendFileToServer(ip, FILE_TRANSFER_PORT, selectedFileUri, username, binding.optionalMessage.getText().toString(), getContext()));
+            tcpClientThread.start();
+        }catch (Exception e){
+            Toast.makeText(requireContext(), "Ops! Try again", Toast.LENGTH_SHORT).show();
+        }
+
     }
 
     private void broadcastHandshaker() {
