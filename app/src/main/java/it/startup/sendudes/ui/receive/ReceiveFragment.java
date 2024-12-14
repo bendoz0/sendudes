@@ -94,7 +94,7 @@ public class ReceiveFragment extends Fragment {
         });
 
         binding.btnRejectData.setOnClickListener(v -> {
-            new Thread(TcpServer::rejectFileFromSocket).start();
+            rejectIncomingFile();
         });
         binding.btnAcceptData.setOnClickListener(v -> {
             new Thread(() -> {
@@ -104,6 +104,10 @@ public class ReceiveFragment extends Fragment {
                 });
             }).start();
         });
+    }
+
+    private static void rejectIncomingFile() {
+        new Thread(TcpServer::rejectFileFromSocket).start();
     }
 
     private void showFilePropertiesInArrival() {
@@ -142,6 +146,7 @@ public class ReceiveFragment extends Fragment {
             tcpSeverStarterThread.interrupt();
         try {
             if (!fileTransferSocket.isClosed()) {
+                rejectIncomingFile();
                 fileTransferSocket.close();
             }
         } catch (Exception e) {
