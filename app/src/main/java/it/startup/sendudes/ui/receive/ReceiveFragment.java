@@ -10,7 +10,6 @@ import static it.startup.sendudes.utils.files_utils.PermissionHandler.askForFile
 import static it.startup.sendudes.utils.network_discovery.NetworkUtils.readableFileSize;
 
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,6 +46,7 @@ public class ReceiveFragment extends Fragment {
     public void onStart() {
         super.onStart();
         binding.btnAcceptData.setEnabled(false);
+        binding.progressBar.setProgress(0);
         binding.btnRejectData.setEnabled(false);
         binding.twUserIp.setText(username);
         binding.cardView.setVisibility(View.GONE);
@@ -88,7 +88,12 @@ public class ReceiveFragment extends Fragment {
             new Thread(TcpServer::rejectFileFromSocket).start();
         });
         binding.btnAcceptData.setOnClickListener(v -> {
-            new Thread(() -> TcpServer.acceptFileFromSocket(getContext())).start();
+            new Thread(() -> {
+                binding.progressBar.setProgress(0);
+                TcpServer.acceptFileFromSocket(getContext(), progress -> {
+                    binding.progressBar.setProgress(progress, true);
+                });
+            }).start();
         });
     }
 

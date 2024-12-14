@@ -1,17 +1,12 @@
 package it.startup.sendudes.utils.file_transfer_utils;
 
-
-import static android.content.ContentValues.TAG;
-
 import android.content.Context;
-import android.database.Cursor;
+
 import android.media.MediaScannerConnection;
-import android.net.Uri;
+
 import android.os.Environment;
-import android.provider.MediaStore;
-import android.text.NoCopySpan;
 import android.util.Log;
-import android.widget.Toast;
+
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,22 +22,22 @@ import java.time.format.DateTimeFormatter;
 
 import static it.startup.sendudes.utils.IConstants.MSG_ACCEPT_CLIENT;
 import static it.startup.sendudes.utils.IConstants.MSG_BUSY_CLIENT;
-import static it.startup.sendudes.utils.IConstants.MSG_CLIENT_RECEIVING;
 import static it.startup.sendudes.utils.IConstants.MSG_FILETRANSFER_FINISHED;
 import static it.startup.sendudes.utils.IConstants.MSG_REJECT_CLIENT;
 
 import it.startup.sendudes.utils.Db.FilesDbAdapter;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientConnected;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnClientDisconnect;
+import it.startup.sendudes.utils.file_transfer_utils.tcp_events.ProgressListener;
 import it.startup.sendudes.utils.network_discovery.NetworkUtils;
 
 public class TcpServer {
     private static String acceptedData;
     private static Socket clientSocket;
     private static ServerSocket serverSocket = null;
+
     public static BufferedReader in;
     public static PrintWriter out;
-    private static Thread decisionThread;
     private static String connectedClient;
     private static OnClientConnected actionOnClientConnect;
     private static OnClientDisconnect actionOnClientDisconnect;
@@ -106,23 +101,21 @@ public class TcpServer {
     }
 
 
-
-
-    static public void acceptFileFromSocket(Context context) {
+    static public void acceptFileFromSocket(Context context, ProgressListener listener) {
         out.println(MSG_ACCEPT_CLIENT);
         try {
             //filePath rappresenta il percorso di salvataggio del file
             String filePath = prepareFilePath();
             int fileSize = (int) fileDetails.getFileSize(); // Expected file size
             //chiamata del metodo per il trasferimento del file
-            transferFile(clientSocket.getInputStream(), filePath, fileSize);
+            transferFile(clientSocket.getInputStream(), filePath, fileSize, listener);
 
-            MediaScannerConnection.scanFile(context, new String[] {filePath}, null, (path, uri) -> {
+            MediaScannerConnection.scanFile(context, new String[]{filePath}, null, (path, uri) -> {
                 String uriContent = uri.toString();
                 db = new FilesDbAdapter(context).open();
                 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
                 LocalDateTime dateNow = LocalDateTime.now();
-                long outcome = db.createFileRow(fileDetails.getFileName(), "" + NetworkUtils.readableFileSize(fileDetails.getFileSize()), dtf.format(dateNow), 0, uriContent);
+                long outcome = db.createFileRow(fileDetails.getFileName(), NetworkUtils.readableFileSize(fileDetails.getFileSize()), dtf.format(dateNow), 0, uriContent);
                 if (outcome == -1) Log.d("INSERT INTO", "ERROOORRRRRRRRREEEEEE");
             });
 
@@ -151,7 +144,7 @@ public class TcpServer {
     }
 
     //metodo per gestire il trasferimento del file
-    private static void transferFile(InputStream socketInputStream, String filePath, int fileSize) {
+    private static void transferFile(InputStream socketInputStream, String filePath, int fileSize, ProgressListener listener) {
         int nTotalRead = 0;  // Tracks the total bytes read
         int nBytesRead;      //variabile per tracciare i byte letti ad ogni ciclo
         byte[] buffer = new byte[16 * 1024];
@@ -176,6 +169,7 @@ public class TcpServer {
 
                 //calcolo la percentuale per terminare
                 double progress = ((double) nTotalRead / (double) fileSize) * 100;
+                listener.onProgressUpdate((int) progress);
                 Log.d("FILE TRANSFER", "Progress: " + String.format("%.0f", progress) + "%");
             }
         } catch (IOException e) {
@@ -183,6 +177,8 @@ public class TcpServer {
             throw new RuntimeException("File transfer failed", e);
         }
     }
+
+
 
     public static void closeConnections() {
         try {

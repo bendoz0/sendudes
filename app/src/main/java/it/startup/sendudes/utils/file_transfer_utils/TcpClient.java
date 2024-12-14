@@ -24,6 +24,7 @@ import it.startup.sendudes.utils.Db.FilesDbAdapter;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnConnectionBusy;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnTransferError;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.OnTransferSuccessfull;
+import it.startup.sendudes.utils.file_transfer_utils.tcp_events.ProgressListener;
 import it.startup.sendudes.utils.files_utils.FileUtils;
 import it.startup.sendudes.utils.network_discovery.NetworkUtils;
 
@@ -34,7 +35,7 @@ public class TcpClient {
     private FilesDbAdapter db;
 
     //gestisce la connessione con il server, l'inizio dell'invio del pacchetto e getisce la risposta del server
-    public void sendFileToServer(String IP, int port, Uri uri, String username, String message, Context context) {
+    public void sendFileToServer(String IP, int port, Uri uri, String username, String message, Context context, ProgressListener listener) {
         FileUtils.FileInfo fileInfoFromUri = null;
 
         if (uri != null) fileInfoFromUri = getFileInfoFromUri(context, uri);
@@ -59,7 +60,7 @@ public class TcpClient {
             // Verifica della risposta del server
             if (response != null) {
                 if (response.equals(MSG_ACCEPT_CLIENT)) {
-                    transferFile(socket, in, context, uri, fileInfoFromUri);
+                    transferFile(socket, in, context, uri, fileInfoFromUri, listener);
                 } else if (response.equals(MSG_BUSY_CLIENT)) {
                     handleServerBusy();
                 }
@@ -72,7 +73,7 @@ public class TcpClient {
     }
 
     // Metodo per gestire il trasferimento del file
-    private void transferFile(Socket socket, BufferedReader in, Context context, Uri uri, FileUtils.FileInfo fileInfoFromUri) throws IOException {
+    private void transferFile(Socket socket, BufferedReader in, Context context, Uri uri, FileUtils.FileInfo fileInfoFromUri, ProgressListener listener) throws IOException {
         try (BufferedOutputStream socketOutputStream = new BufferedOutputStream(socket.getOutputStream());
              InputStream fileInputStream = getFileInputStreamFromURI(context, uri)) {
 
@@ -89,6 +90,7 @@ public class TcpClient {
                 socketOutputStream.flush();
                 totalBytesSent += bytesToSend;
                 double progress = ((double) totalBytesSent / (double) fileInfoFromUri.size) * 100;
+                listener.onProgressUpdate((int) progress);
                 Log.d("FILE TRANSFER", "Progress:" + String.format("%.0f", progress) + "%");
             }
 
@@ -99,7 +101,7 @@ public class TcpClient {
                     db = new FilesDbAdapter(context).open();
                     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
                     LocalDateTime dateNow = LocalDateTime.now();
-                    long outcome = db.createFileRow(fileInfoFromUri.name, "" + NetworkUtils.readableFileSize(fileInfoFromUri.size), dtf.format(dateNow), 1, uri.toString());
+                    long outcome = db.createFileRow(fileInfoFromUri.name, NetworkUtils.readableFileSize(fileInfoFromUri.size), dtf.format(dateNow), 1, uri.toString());
                     if (outcome == -1) Log.d("INSERT INTO", "ERROOORRRRRRRRREEEEEE");
                     db.close();
                     transferSuccessfulEvent.onTransferFinished();

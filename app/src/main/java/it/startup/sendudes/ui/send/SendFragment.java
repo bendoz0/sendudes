@@ -7,19 +7,15 @@ import static it.startup.sendudes.utils.IConstants.RECEIVE_PORT;
 import static it.startup.sendudes.utils.IConstants.username;
 import static it.startup.sendudes.utils.files_utils.PermissionHandler.askForFilePermission;
 
-import android.app.Activity;
-import android.content.Context;
+
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.media.MediaMetadataRetriever;
+
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.CancellationSignal;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,17 +25,19 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Objects;
 
 import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentSendBinding;
 import it.startup.sendudes.utils.file_transfer_utils.TcpClient;
+import it.startup.sendudes.utils.file_transfer_utils.tcp_events.ProgressListener;
+import it.startup.sendudes.utils.files_utils.FileThumbnailLoader;
 import it.startup.sendudes.utils.files_utils.FileUtils;
 import it.startup.sendudes.utils.network_discovery.OnListUpdate;
 import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
@@ -73,11 +71,11 @@ public class SendFragment extends Fragment {
             udpHandler = new UDP_NetworkUtils(PING_PORT, RECEIVE_PORT, username);
             tcpClient = new TcpClient();
             ipListAdapter = new ArrayAdapter<>(
-                    getContext(),
+                    requireContext(),
                     android.R.layout.simple_dropdown_item_1line,
                     new ArrayList<>()
             );
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
         }
         uiActivityStart();
@@ -88,7 +86,7 @@ public class SendFragment extends Fragment {
     @NonNull
     private ArrayAdapter<String> getIpListAdapter(HashMap<String, String> scannedIPs) {
         return new ArrayAdapter<>(
-                getContext(),
+                requireActivity(),
                 android.R.layout.simple_dropdown_item_1line,
                 new ArrayList<>(scannedIPs.values())
         );
@@ -137,6 +135,7 @@ public class SendFragment extends Fragment {
     private void uiActivityStart() {
         binding.btnSend.setEnabled(false);
         binding.twUserIp.setText(username);
+        binding.progressBar.setProgress(0);
         binding.fileChosen.setOnClickListener(v -> onClickChooseFile());
         isOptionalMessageFieldEmpty();
         binding.btnNetworkScanner.setOnClickListener(v -> {
@@ -173,11 +172,11 @@ public class SendFragment extends Fragment {
                     binding.foundIps.setOnItemClickListener((adapterView, view, position, id) -> {
                         if (currentlySelectedView != null) {
                             currentlySelectedView.setSelected(false);
-                            currentlySelectedView.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                            currentlySelectedView.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.transparent));
                         }
 
                         view.setSelected(true);
-                        view.setBackgroundColor(getResources().getColor(R.color.teal_200));
+                        view.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.teal_200));
                         currentlySelectedView = view;
                         selectedIp = (String) adapterView.getItemAtPosition(position);
                         updateSendBtnState();
@@ -193,7 +192,7 @@ public class SendFragment extends Fragment {
 
                 if (currentlySelectedView != null) {
                     currentlySelectedView.setSelected(false);
-                    currentlySelectedView.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                    currentlySelectedView.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.transparent));
                     currentlySelectedView = null;
                     selectedIp = null;
                 }
@@ -263,10 +262,17 @@ public class SendFragment extends Fragment {
     }
 
     public void TCP_clientThread(String ip) {
-        try{
-            tcpClientThread = new Thread(() -> tcpClient.sendFileToServer(ip, FILE_TRANSFER_PORT, selectedFileUri, username, binding.optionalMessage.getText().toString(), getContext()));
+        try {
+            binding.progressBar.setProgress(0);
+            tcpClientThread = new Thread(() -> tcpClient.sendFileToServer(ip, FILE_TRANSFER_PORT, selectedFileUri, username, binding.optionalMessage.getText().toString(), getContext(), new ProgressListener() {
+                @Override
+                public void onProgressUpdate(int progress) {
+                    if (binding != null && binding.progressBar != null)
+                        binding.progressBar.setProgress(progress);
+                }
+            }));
             tcpClientThread.start();
-        }catch (Exception e){
+        } catch (Exception e) {
             Toast.makeText(requireContext(), "Ops! Try again", Toast.LENGTH_SHORT).show();
         }
 
@@ -345,7 +351,7 @@ public class SendFragment extends Fragment {
     public void updateSendBtnState() {
         requireActivity().runOnUiThread(() -> {
             binding.fileChosen.setText((selectedFileUri != null ? "FILE: " + FileUtils.getFileInfoFromUri(requireContext(), selectedFileUri).name : "Select a file"));
-            FileUtils.loadFileThumbnail(binding.fileChosen.getText().toString(), selectedFileUri, binding, requireActivity(), 105, 105);
+            FileThumbnailLoader.loadFileThumbnail(binding.fileChosen.getText().toString(), selectedFileUri, binding, requireActivity(), 105, 105);
             boolean isOptionalMessageValid = !binding.optionalMessage.getText().toString().isEmpty();
             boolean isFileUriValid = selectedFileUri != null;
             boolean isIpValid = selectedIp != null && !selectedIp.isEmpty();
