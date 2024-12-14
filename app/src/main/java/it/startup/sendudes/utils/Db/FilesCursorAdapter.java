@@ -17,7 +17,7 @@ import android.widget.TextView;
 import java.util.Objects;
 
 import it.startup.sendudes.R;
-import it.startup.sendudes.utils.files_utils.FileUtils;
+import it.startup.sendudes.utils.files_utils.FileThumbnailLoader;
 
 public class FilesCursorAdapter extends CursorAdapter {
     private Activity activity;
@@ -78,7 +78,7 @@ public class FilesCursorAdapter extends CursorAdapter {
 
     private void loadSelectedFileThumbnail(Uri uri, ViewHolder holder) {
         try {
-            holder.image.setImageBitmap(FileUtils.simplyLoadBitmap(uri, activity, 105, 105));
+            holder.image.setImageBitmap(FileThumbnailLoader.simplyLoadBitmap(uri, activity, 105, 105));
         } catch (Exception e) {
             Log.d("Error Loading Thumbnail", Objects.requireNonNull(e.getMessage()));
 
@@ -92,7 +92,7 @@ public class FilesCursorAdapter extends CursorAdapter {
                 holder.image.setImageResource(android.R.drawable.ic_menu_save);
 
             } else if (fileName.endsWith("mov") || fileName.endsWith("mp4") || fileName.endsWith("mkv")) {
-                Bitmap videoThumbnail = FileUtils.loadVideoThumbnailForOlderAPIs(uri, activity);
+                Bitmap videoThumbnail = FileThumbnailLoader.loadVideoThumbnailForOlderAPIs(uri, activity);
                 if (videoThumbnail != null)
                     holder.image.setImageBitmap(videoThumbnail);
 
