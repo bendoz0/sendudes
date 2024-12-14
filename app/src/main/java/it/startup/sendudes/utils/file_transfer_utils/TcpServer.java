@@ -96,8 +96,10 @@ public class TcpServer {
     }
 
     static public void rejectFileFromSocket() {
-        out.println(MSG_REJECT_CLIENT);
-        closeConnections();
+        if (out != null && clientSocket != null) {
+            out.println(MSG_REJECT_CLIENT);
+            closeConnections();
+        }
     }
 
 
@@ -179,15 +181,14 @@ public class TcpServer {
     }
 
 
-
     public static void closeConnections() {
         try {
             clientSocket.close();
 //            serverSocket.close();
             if (actionOnClientConnect != null) actionOnClientDisconnect.onDisconnected();
             connectionOccupied = false;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            Log.d("TCP: ", "Connection is closed");
         }
     }
 
