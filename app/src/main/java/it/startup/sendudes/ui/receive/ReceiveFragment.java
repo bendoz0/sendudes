@@ -14,6 +14,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -24,6 +26,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Objects;
 
+import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentReceiveBinding;
 import it.startup.sendudes.utils.file_transfer_utils.FileTransferPacket;
 import it.startup.sendudes.utils.file_transfer_utils.TcpServer;
@@ -45,6 +48,8 @@ public class ReceiveFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        Animation pulseAnimation = AnimationUtils.loadAnimation(requireContext(), R.anim.circular_pulse_animation);
+        binding.pulseView.startAnimation(pulseAnimation);
         binding.btnAcceptData.setEnabled(false);
         binding.progressBar.setProgress(0);
         binding.btnRejectData.setEnabled(false);
@@ -71,6 +76,8 @@ public class ReceiveFragment extends Fragment {
             requireActivity().runOnUiThread(() -> {
                 binding.btnAcceptData.setEnabled(true);
                 binding.btnRejectData.setEnabled(true);
+                binding.pulseView.setVisibility(View.GONE);
+                binding.receivedDataContainer.setVisibility(View.VISIBLE);
                 showFilePropertiesInArrival();
             });
         });
@@ -79,6 +86,8 @@ public class ReceiveFragment extends Fragment {
             requireActivity().runOnUiThread(() -> {
                 binding.btnAcceptData.setEnabled(false);
                 binding.btnRejectData.setEnabled(false);
+                binding.receivedDataContainer.setVisibility(View.GONE);
+                binding.pulseView.setVisibility(View.VISIBLE);
                 Toast.makeText(getContext(), "User disconnected", Toast.LENGTH_SHORT).show();
                 clearFilePropertiesInArrival();
             });
