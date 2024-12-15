@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:gravity="center"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -23,9 +23,43 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="Your IP"
+            android:text="@string/your_ip"
             android:textSize="16sp"
             android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/customIpContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/customIpLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginHorizontal="8dp"
+                android:layout_weight="1"
+                app:endIconMode="clear_text">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/customIpInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/ip_placeholder"
+                    android:inputType="text"
+                    android:minHeight="55dp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/customIpSetBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="@string/set_user" />
+        </LinearLayout>
+
     </LinearLayout>
 
 
@@ -34,7 +68,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="SCAN USERS"
+        android:text="@string/scan_users"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/firstLayout" />
@@ -55,7 +89,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:gravity="center"
-        android:text="No user found"
+        android:text="@string/no_user_found"
         android:textColor="@android:color/darker_gray"
         android:textSize="16sp"
         android:visibility="gone"
@@ -82,34 +116,35 @@
         android:layout_marginBottom="16dp"
         android:background="@drawable/rounded_background"
         android:maxWidth="240dp"
-        android:text="Select a file"
         android:padding="8dp"
+        android:text="@string/select_a_file"
         android:textAlignment="center"
         android:textColor="@android:color/white"
-        android:textSize="16sp"
+        android:textSize="12sp"
         app:flow_wrapMode="aligned"
-        app:layout_constraintBottom_toTopOf="@+id/optionalMessage"
+        app:layout_constraintBottom_toTopOf="@+id/optionalMessageLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-
-    <EditText
-        android:id="@+id/optionalMessage"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/optionalMessageLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:layout_marginBottom="16dp"
-        android:autofillHints="Hi"
-        android:background="@drawable/rounded_edittext_background"
-        android:hint="Enter your text here"
-        android:inputType="text"
-        android:minHeight="48dp"
-        android:padding="12dp"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
+        app:endIconMode="clear_text"
         app:layout_constraintBottom_toTopOf="@+id/bottomBtns"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/optionalMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/enter_your_text_here"
+            android:inputType="text"
+            android:minHeight="55dp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
 
     <LinearLayout
         android:id="@+id/bottomBtns"
@@ -146,7 +181,7 @@
         android:id="@+id/selectedFileThumbnail"
         android:layout_width="72dp"
         android:layout_height="72dp"
-        app:layout_constraintBottom_toTopOf="@+id/optionalMessage"
+        app:layout_constraintBottom_toTopOf="@+id/optionalMessageLayout"
         app:layout_constraintEnd_toStartOf="@+id/fileChosen"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/found_ips"

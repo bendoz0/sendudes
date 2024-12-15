@@ -29,12 +29,12 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentSendBinding;
+import it.startup.sendudes.utils.file_transfer_utils.IPAddressValidator;
 import it.startup.sendudes.utils.file_transfer_utils.TcpClient;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.ProgressListener;
 import it.startup.sendudes.utils.files_utils.FileThumbnailLoader;
@@ -81,6 +81,18 @@ public class SendFragment extends Fragment {
         uiActivityStart();
         broadcastPingEverySecond();
         broadcastHandshaker();
+
+        binding.customIpSetBtn.setOnClickListener(v -> {
+            if (binding.customIpInput.getText() != null && !binding.customIpInput.getText().toString().isEmpty()) {
+                if (IPAddressValidator.isValidIPv4(binding.customIpInput.getText().toString())) {
+                    selectedIp = binding.customIpInput.getText().toString();
+                    updateSendBtnState();
+                } else {
+                    Toast.makeText(getContext(), "Invalid User IP", Toast.LENGTH_LONG).show();
+                    binding.customIpInput.setText("");
+                }
+            }
+        });
     }
 
     @NonNull
@@ -188,7 +200,9 @@ public class SendFragment extends Fragment {
 
         binding.btnSend.setOnClickListener(l -> {
             if (binding.btnSend.isEnabled() && selectedIp != null) {
-                TCP_clientThread(selectedIp.split("#", 2)[1]);
+                if (selectedIp.contains("#"))
+                    TCP_clientThread(selectedIp.split("#", 2)[1]);
+                else TCP_clientThread(selectedIp);
 
                 if (currentlySelectedView != null) {
                     currentlySelectedView.setSelected(false);
@@ -214,7 +228,7 @@ public class SendFragment extends Fragment {
 
         requireActivity().runOnUiThread(() -> {
             binding.scanProgressBar.setVisibility(View.VISIBLE);
-            binding.scannedMsg.setText("Loading");
+            binding.scannedMsg.setText(R.string.sendFragment_loading);
         });
 
         new Thread(() -> {
@@ -234,7 +248,7 @@ public class SendFragment extends Fragment {
                 requireActivity().runOnUiThread(() -> {
                     binding.btnNetworkScanner.setEnabled(true);
                     binding.scanProgressBar.setVisibility(View.GONE);
-                    binding.scannedMsg.setText("No user found");
+                    binding.scannedMsg.setText(R.string.no_user_found);
                 });
             }
         }).start();
@@ -255,7 +269,7 @@ public class SendFragment extends Fragment {
         );
         tcpClient.setTransferErrorEvent(() ->
                 requireActivity().runOnUiThread(() -> {
-                            Toast.makeText(getContext(), "ERROR OCCURRED WHILE TRANSFERRING THE FILE", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
                             updateSendBtnState();
                         }
                 ));
