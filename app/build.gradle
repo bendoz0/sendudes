@@ -46,6 +46,7 @@ dependencies {
     implementation libs.gson
     implementation libs.permissionx
     implementation libs.javafaker
+    implementation libs.material.vversion
 
 
 }
