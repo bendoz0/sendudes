@@ -120,14 +120,14 @@ public class ReceiveFragment extends Fragment {
         binding.fileSize.setVisibility(binding.btnAcceptData.isEnabled() ? View.VISIBLE : View.GONE);
         binding.fileName.setVisibility(binding.btnAcceptData.isEnabled() ? View.VISIBLE : View.GONE);
 
-        binding.receivingFrom.setText("Receiving from: " + fileInArrival.getUserName());
+        binding.receivingFrom.setText(String.format("%s%s", getString(R.string.receiving_from), fileInArrival.getUserName()));
         binding.fileName.setText((fileInArrival.getFileName().isEmpty() ? "" : "File name: " + fileInArrival.getFileName()));
         binding.fileSize.setText(fileInArrival.getFileSize() > 0 ? "File Size: " + readableFileSize(fileInArrival.getFileSize()) : "");
         binding.receivedMessage.setText(fileInArrival.getOptionalMessage().isEmpty() ? "" : "Message: " + fileInArrival.getOptionalMessage());
     }
 
     private void clearFilePropertiesInArrival() {
-        binding.receivingFrom.setText("User disconnected");
+        binding.receivingFrom.setText(R.string.user_disconnected);
         binding.fileName.setText("");
         binding.fileSize.setText("");
         binding.receivedMessage.setText("");
