@@ -25,11 +25,11 @@
 
     <LinearLayout
         android:id="@+id/animContainer"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@+id/receivedDataContainer"
         app:layout_constraintEnd_toEndOf="parent"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:gravity="center"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/progressBar">
@@ -38,7 +38,6 @@
             android:id="@+id/tw_userIp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
             android:text="Your IP"
             android:textSize="16sp"
             android:textStyle="bold"
