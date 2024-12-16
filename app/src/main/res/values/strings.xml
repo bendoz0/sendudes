@@ -12,7 +12,6 @@
     <string name="no_user_found">No user found</string>
     <string name="your_ip">Your IP</string>
     <string name="ip_placeholder">192.168.12.2</string>
-    <string name="set_user">Set user</string>
     <string name="scan_users">SCAN USERS</string>
     <string name="select_a_file">Select a file</string>
     <string name="enter_your_text_here">Enter your text here</string>

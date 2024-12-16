@@ -51,12 +51,9 @@ public class SendFragment extends Fragment {
     private Uri selectedFileUri;
     private TcpClient tcpClient;
     private Handler handler;
-
     private ArrayAdapter<String> ipListAdapter;
     private boolean isScanning = false;
     private final int SCAN_DURATION_SECONDS = 2;
-    View currentlySelectedView = null;
-    String selectedIp = null;
 
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -81,33 +78,6 @@ public class SendFragment extends Fragment {
         uiActivityStart();
         broadcastPingEverySecond();
         broadcastHandshaker();
-
-        binding.customIpSetBtn.setOnClickListener(v -> {
-            if (binding.customIpInput.getText() != null && !binding.customIpInput.getText().toString().isEmpty()) {
-                if (IPAddressValidator.isValidIPv4(binding.customIpInput.getText().toString())) {
-                    selectedIp = binding.customIpInput.getText().toString();
-                    updateSendBtnState();
-                } else {
-                    Toast.makeText(getContext(), "Invalid User IP", Toast.LENGTH_LONG).show();
-                    binding.customIpInput.setText("");
-                }
-            }
-        });
-    }
-
-    @NonNull
-    private ArrayAdapter<String> getIpListAdapter(HashMap<String, String> scannedIPs) {
-        return new ArrayAdapter<>(
-                requireActivity(),
-                android.R.layout.simple_dropdown_item_1line,
-                new ArrayList<>(scannedIPs.values())
-        );
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        updateSendBtnState();
     }
 
     @Override
@@ -135,7 +105,7 @@ public class SendFragment extends Fragment {
                 if (udpHandler != null) {
                     udpHandler.broadcast(MSG_CLIENT_PING);
 //                    TODO:  MAKE IT WORK WITHOUT REFRESHING THE PAGE/FRAGMENT
-//                    handler.postDelayed(this, 3000);
+                    handler.postDelayed(this, 3000);
                 }
 
 
@@ -145,22 +115,36 @@ public class SendFragment extends Fragment {
     }
 
     private void uiActivityStart() {
-        binding.btnSend.setEnabled(false);
         binding.twUserIp.setText(username);
         binding.progressBar.setProgress(0);
         binding.fileChosen.setOnClickListener(v -> onClickChooseFile());
-        isOptionalMessageFieldEmpty();
         binding.btnNetworkScanner.setOnClickListener(v -> {
             if (udpHandler != null)
                 onClickScanNetwork();
             else Toast.makeText(getContext(), "No internet found", Toast.LENGTH_LONG).show();
 
         });
+        binding.customIpSetBtn.setOnClickListener(v -> {
+            if (binding.customIpInput.getText() != null && !binding.customIpInput.getText().toString().isEmpty()) {
+                if (IPAddressValidator.isValidIPv4(binding.customIpInput.getText().toString())) {
+                    String selectedIp = binding.customIpInput.getText().toString();
+                    tryToSendFile(selectedIp);
+                } else {
+                    Toast.makeText(getContext(), "Invalid User IP", Toast.LENGTH_LONG).show();
+                    binding.customIpInput.setText("");
+                }
+            }
+        });
+        binding.foundIps.setOnItemClickListener((adapterView, view, position, id) -> {
+            String ip = (String) adapterView.getItemAtPosition(position);
+            tryToSendFile(ip.split("#", 2)[1]);
+        });
+        binding.foundIps.setAdapter(ipListAdapter);
+
         OnListUpdate updatedList = scannedIPs -> {
             requireActivity().runOnUiThread(() -> {
                 if (scannedIPs == null) {
                     Toast.makeText(getContext(), "no connection", Toast.LENGTH_SHORT).show();
-
                     return;
                 }
                 if (scannedIPs.isEmpty()) {
@@ -170,54 +154,29 @@ public class SendFragment extends Fragment {
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                     }
-                    Log.d("SCANNED USERS: ", "NO USER FOUND");
                 } else {
                     binding.scannedMsg.setVisibility(View.GONE);
                     binding.foundIps.setVisibility(View.VISIBLE);
-                    ipListAdapter = getIpListAdapter(scannedIPs);
-                    binding.foundIps.setAdapter(ipListAdapter);
-                    ipListAdapter.notifyDataSetChanged(); //per aggiornare costantemente
-                    binding.btnSend.setEnabled(false);
+                    ipListAdapter.clear();
+                    ipListAdapter.addAll(scannedIPs.values());
                     ipListAdapter.notifyDataSetChanged();
-
-
-                    binding.foundIps.setOnItemClickListener((adapterView, view, position, id) -> {
-                        if (currentlySelectedView != null) {
-                            currentlySelectedView.setSelected(false);
-                            currentlySelectedView.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.transparent));
-                        }
-
-                        view.setSelected(true);
-                        view.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.teal_200));
-                        currentlySelectedView = view;
-                        selectedIp = (String) adapterView.getItemAtPosition(position);
-                        updateSendBtnState();
-                    });
                 }
             });
         };
         if (udpHandler != null) udpHandler.onListUpdate(updatedList);
 
-        binding.btnSend.setOnClickListener(l -> {
-            if (binding.btnSend.isEnabled() && selectedIp != null) {
-                if (selectedIp.contains("#"))
-                    TCP_clientThread(selectedIp.split("#", 2)[1]);
-                else TCP_clientThread(selectedIp);
-
-                if (currentlySelectedView != null) {
-                    currentlySelectedView.setSelected(false);
-                    currentlySelectedView.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.transparent));
-                    currentlySelectedView = null;
-                    selectedIp = null;
-                }
-
-                binding.btnSend.setEnabled(false);
-            }
-        });
         try {
             tcpStarter();
         } catch (Exception e) {
             Toast.makeText(getContext(), "no connection", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    void tryToSendFile(String ip) {
+        if (canFileBeSent()) {
+            startFileTransfer(ip);
+        } else {
+            Toast.makeText(getContext(), "Select a file or text", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -259,7 +218,6 @@ public class SendFragment extends Fragment {
                 requireActivity().runOnUiThread(() -> {
                             Toast.makeText(getContext(), "TRANSFER FINISHED SUCCESSFULLY", Toast.LENGTH_SHORT).show();
                             selectedFileUri = null;
-                            updateSendBtnState();
                         }
                 ));
         tcpClient.setConnectionBusyEvent(() ->
@@ -270,12 +228,11 @@ public class SendFragment extends Fragment {
         tcpClient.setTransferErrorEvent(() ->
                 requireActivity().runOnUiThread(() -> {
                             Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
-                            updateSendBtnState();
                         }
                 ));
     }
 
-    public void TCP_clientThread(String ip) {
+    public void startFileTransfer(String ip) {
         try {
             binding.progressBar.setProgress(0);
             tcpClientThread = new Thread(() -> tcpClient.sendFileToServer(ip, FILE_TRANSFER_PORT, selectedFileUri, username, binding.optionalMessage.getText().toString(), getContext(), new ProgressListener() {
@@ -336,41 +293,24 @@ public class SendFragment extends Fragment {
                     Uri fileUri = result.getData().getData();
                     if (fileUri != null) {
                         selectedFileUri = fileUri;
-//                        Toast.makeText(getContext(), selectedFileUri.toString(), Toast.LENGTH_LONG).show();
-                        // debug
-                        updateSendBtnState();
+                        updateFileChosenButton();
                         return;
                     }
                 }
                 Toast.makeText(getContext(), "Nessun file selezionato", Toast.LENGTH_SHORT).show();
             });
 
-    public void isOptionalMessageFieldEmpty() {
-        binding.optionalMessage.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                updateSendBtnState();
-            }
-        });
-    }
-
-    public void updateSendBtnState() {
+    void updateFileChosenButton(){
         requireActivity().runOnUiThread(() -> {
             binding.fileChosen.setText((selectedFileUri != null ? "FILE: " + FileUtils.getFileInfoFromUri(requireContext(), selectedFileUri).name : "Select a file"));
             FileThumbnailLoader.loadFileThumbnail(binding.fileChosen.getText().toString(), selectedFileUri, binding, requireActivity(), 105, 105);
-            boolean isOptionalMessageValid = !binding.optionalMessage.getText().toString().isEmpty();
-            boolean isFileUriValid = selectedFileUri != null;
-            boolean isIpValid = selectedIp != null && !selectedIp.isEmpty();
-
-            binding.btnSend.setEnabled((isOptionalMessageValid || isFileUriValid) && isIpValid);
         });
+    }
+
+    public boolean canFileBeSent() {
+        boolean isOptionalMessageValid = !binding.optionalMessage.getText().toString().isEmpty();
+        boolean isFileUriValid = selectedFileUri != null;
+
+        return (isOptionalMessageValid || isFileUriValid);
     }
 }
