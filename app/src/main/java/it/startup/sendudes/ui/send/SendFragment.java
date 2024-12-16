@@ -293,11 +293,19 @@ public class SendFragment extends Fragment {
                     Uri fileUri = result.getData().getData();
                     if (fileUri != null) {
                         selectedFileUri = fileUri;
+                        updateFileChosenButton();
                         return;
                     }
                 }
                 Toast.makeText(getContext(), "Nessun file selezionato", Toast.LENGTH_SHORT).show();
             });
+
+    void updateFileChosenButton(){
+        requireActivity().runOnUiThread(() -> {
+            binding.fileChosen.setText((selectedFileUri != null ? "FILE: " + FileUtils.getFileInfoFromUri(requireContext(), selectedFileUri).name : "Select a file"));
+            FileThumbnailLoader.loadFileThumbnail(binding.fileChosen.getText().toString(), selectedFileUri, binding, requireActivity(), 105, 105);
+        });
+    }
 
     public boolean canFileBeSent() {
         boolean isOptionalMessageValid = !binding.optionalMessage.getText().toString().isEmpty();
