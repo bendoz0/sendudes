@@ -55,18 +55,30 @@
             android:layout_margin="6dp"
             android:layout_marginStart="8dp"
             android:src="@drawable/circular_pulse"
-            app:layout_constraintBottom_toTopOf="@+id/receivedDataContainer"
+            app:layout_constraintBottom_toTopOf="@+id/receivingFrom"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tw_userIp" />
     </LinearLayout>
 
 
+    <TextView
+        android:id="@+id/receivingFrom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textIsSelectable="true"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@id/receivedDataContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/animContainer" />
+
     <ScrollView
         android:id="@+id/receivedDataContainer"
         android:layout_width="match_parent"
         android:layout_height="240dp"
         android:visibility="gone"
+        android:padding="4dp"
         app:layout_constraintBottom_toTopOf="@id/cardView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -75,18 +87,12 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:elevation="@dimen/cardview_compat_inset_shadow"
             android:layout_gravity="center_horizontal"
             android:orientation="vertical"
 
             android:textIsSelectable="true"
             tools:layout_editor_absoluteY="363dp">
-
-            <TextView
-                android:id="@+id/receivingFrom"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textIsSelectable="true"
-                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/fileName"

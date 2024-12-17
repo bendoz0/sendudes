@@ -48,8 +48,7 @@ public class ReceiveFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        Animation pulseAnimation = AnimationUtils.loadAnimation(requireContext(), R.anim.circular_pulse_animation);
-        binding.pulseView.startAnimation(pulseAnimation);
+        createPulseAnimation();
         binding.btnAcceptData.setEnabled(false);
         binding.progressBar.setProgress(0);
         binding.btnRejectData.setEnabled(false);
@@ -68,30 +67,18 @@ public class ReceiveFragment extends Fragment {
         });
     }
 
+    private void createPulseAnimation() {
+        Animation pulseAnimation = AnimationUtils.loadAnimation(requireContext(), R.anim.circular_pulse_animation);
+        binding.pulseView.startAnimation(pulseAnimation);
+    }
+
 
     @Override
     public void onResume() {
         super.onResume();
-        setActionOnClientConnect(() -> {
-            requireActivity().runOnUiThread(() -> {
-                binding.btnAcceptData.setEnabled(true);
-                binding.btnRejectData.setEnabled(true);
-                binding.pulseView.setVisibility(View.GONE);
-                binding.receivedDataContainer.setVisibility(View.VISIBLE);
-                showFilePropertiesInArrival();
-            });
-        });
+        clientConnector();
 
-        setActionOnClientDisconnect(() -> {
-            requireActivity().runOnUiThread(() -> {
-                binding.btnAcceptData.setEnabled(false);
-                binding.btnRejectData.setEnabled(false);
-                binding.receivedDataContainer.setVisibility(View.GONE);
-                binding.pulseView.setVisibility(View.VISIBLE);
-                Toast.makeText(getContext(), "User disconnected", Toast.LENGTH_SHORT).show();
-                clearFilePropertiesInArrival();
-            });
-        });
+        clientDisconnector();
 
         binding.btnRejectData.setOnClickListener(v -> {
             rejectIncomingFile();
@@ -103,6 +90,31 @@ public class ReceiveFragment extends Fragment {
                     binding.progressBar.setProgress(progress, true);
                 });
             }).start();
+        });
+    }
+
+    private void clientDisconnector() {
+        setActionOnClientDisconnect(() -> {
+            requireActivity().runOnUiThread(() -> {
+                binding.btnAcceptData.setEnabled(false);
+                binding.btnRejectData.setEnabled(false);
+                binding.receivedDataContainer.setVisibility(View.GONE);
+                binding.pulseView.setVisibility(View.VISIBLE);
+                Toast.makeText(getContext(), "User disconnected", Toast.LENGTH_SHORT).show();
+                clearFilePropertiesInArrival();
+            });
+        });
+    }
+
+    private void clientConnector() {
+        setActionOnClientConnect(() -> {
+            requireActivity().runOnUiThread(() -> {
+                binding.btnAcceptData.setEnabled(true);
+                binding.btnRejectData.setEnabled(true);
+                binding.pulseView.setVisibility(View.GONE);
+                binding.receivedDataContainer.setVisibility(View.VISIBLE);
+                showFilePropertiesInArrival();
+            });
         });
     }
 
@@ -160,10 +172,13 @@ public class ReceiveFragment extends Fragment {
         tcpSeverStarterThread.start();
     }
 
+    /**
+     * Function that
+     */
     private void broadcastReplier() {
         broadcastReplierThread = new Thread(() -> {
             try {
-                udpHandler.startBroadcastHandshakeListener();//Funzione che blocca il codice in questo punto
+                udpHandler.startBroadcastHandshakeListener();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
