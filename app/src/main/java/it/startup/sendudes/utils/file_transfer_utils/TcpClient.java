@@ -2,6 +2,7 @@ package it.startup.sendudes.utils.file_transfer_utils;
 
 import static it.startup.sendudes.utils.IConstants.MSG_ACCEPT_CLIENT;
 import static it.startup.sendudes.utils.IConstants.MSG_BUSY_CLIENT;
+import static it.startup.sendudes.utils.IConstants.MSG_FILETRANSFER_ERROR;
 import static it.startup.sendudes.utils.IConstants.MSG_FILETRANSFER_FINISHED;
 import static it.startup.sendudes.utils.files_utils.FileUtils.getFileInfoFromUri;
 import static it.startup.sendudes.utils.files_utils.FileUtils.getFileInputStreamFromURI;
@@ -33,26 +34,30 @@ public class TcpClient {
     private OnTransferSuccessfull transferSuccessfulEvent;
     private OnTransferError transferErrorEvent;
     private FilesDbAdapter db;
+    private Socket socket;
 
     //gestisce la connessione con il server, l'inizio dell'invio del pacchetto e getisce la risposta del server
     public void sendFileToServer(String IP, int port, Uri uri, String username, String message, Context context, ProgressListener listener) {
+        if (socket != null) {
+            Log.d("Error sending file", "Cant start a new transfer. Cause: Already transferring a file");
+            return;
+        }
         FileUtils.FileInfo fileInfoFromUri = null;
 
         if (uri != null) fileInfoFromUri = getFileInfoFromUri(context, uri);
 
         //funzionalità try-with-resources per chiudere automaticamente le risorse: Socket, PrintWriter e BufferedReader
         //chiude la risorsa quando si esce dal ciclo sia in caso positivo che negativo
-        try (Socket socket = new Socket(IP, port);
-             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+        try {
+            socket = new Socket(IP, port);
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            // Creazione e invio del pacchetto di trasferimento del file
-            // Creazione di un oggetto che ha come parametri: username, nome del file, grandezza del file e un messaggio
-            FileTransferPacket data = new FileTransferPacket(username,
+            FileTransferPacket fileDetails = new FileTransferPacket(username,
                     fileInfoFromUri != null ? fileInfoFromUri.name : "",
                     fileInfoFromUri != null ? fileInfoFromUri.size : 0,
                     message);
-            out.println(FileTransferPacket.toJson(data));
+            out.println(FileTransferPacket.toJson(fileDetails));
 
             String response = in.readLine();
             System.out.println("Server says: " + response);
@@ -63,6 +68,8 @@ public class TcpClient {
                     transferFile(socket, in, context, uri, fileInfoFromUri, listener);
                 } else if (response.equals(MSG_BUSY_CLIENT)) {
                     handleServerBusy();
+                } else if (response.equals(MSG_FILETRANSFER_ERROR)) {
+                    //TODO
                 }
             }
 
@@ -70,6 +77,7 @@ public class TcpClient {
             System.err.println(e.getMessage());
             if (transferErrorEvent != null) transferErrorEvent.OnTransferFailed();
         }
+        closeSendSocket();
     }
 
     // Metodo per gestire il trasferimento del file
@@ -97,7 +105,7 @@ public class TcpClient {
             // Lettura del messaggio di fine trasferimento dal server
             String fileTransferEnd = in.readLine();
             if (fileTransferEnd != null && fileTransferEnd.equals(MSG_FILETRANSFER_FINISHED)) {
-                if (transferSuccessfulEvent != null){
+                if (transferSuccessfulEvent != null) {
                     db = new FilesDbAdapter(context).open();
                     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
                     LocalDateTime dateNow = LocalDateTime.now();
@@ -120,7 +128,16 @@ public class TcpClient {
         if (connectionBusyEvent != null) connectionBusyEvent.onConnectionBusy();
     }
 
-
+    public void closeSendSocket() {
+        try {
+            if (socket != null) {
+                socket.close();
+                socket = null;
+            }
+        } catch (IOException e) {
+            Log.d("Close socket error", "closeSendSocket: " + e.getMessage());
+        }
+    }
 
     //Event triggered when the file has been sent successfully
     public void setTransferSuccessfullEvent(OnTransferSuccessfull transferSuccessfullEvent) {

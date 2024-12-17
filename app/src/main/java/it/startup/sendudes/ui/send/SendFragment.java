@@ -83,7 +83,9 @@ public class SendFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
+        selectedFileUri = null;
         isScanning = false;
+        //if (tcpClient != null) tcpClient.closeSendSocket();
         if (handler != null) handler.removeCallbacksAndMessages(null);
         if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
             broadcastHandshakeThread.interrupt();

@@ -16,6 +16,7 @@ public interface IConstants {
     String MSG_ACCEPT_CLIENT = "ACCEPT";
     String MSG_REJECT_CLIENT = "REJECT";
     String MSG_BUSY_CLIENT = "BUSY";
+    String MSG_FILETRANSFER_ERROR = "MSG_FILETRANSFER_ERROR";
     String MSG_FILETRANSFER_FINISHED = "FILE_RECEIVED";
     String username = new Faker().leagueOfLegends().champion() + "#" + getMyIP();
 
