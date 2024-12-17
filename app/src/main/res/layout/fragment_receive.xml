@@ -125,33 +125,24 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/receivedDataContainer">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="@dimen/activity_horizontal_margin">
-
+            android:gravity="center">
             <Button
+                android:layout_width="wrap_content"
                 android:id="@+id/btnAcceptData"
-                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:text="Accept"
-                app:layout_constraintEnd_toStartOf="@id/btnRejectData"
-                app:layout_constraintHorizontal_bias="0.4"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintWidth_percent="0.4" />
+                android:layout_marginHorizontal="16dp"/>
 
             <Button
+                android:layout_width="wrap_content"
                 android:id="@+id/btnRejectData"
-                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:text="Reject"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/btnAcceptData"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintWidth_percent="0.4" /> <!-- Width percentage -->
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                android:layout_marginHorizontal="16dp"/>
+        </LinearLayout>
     </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
