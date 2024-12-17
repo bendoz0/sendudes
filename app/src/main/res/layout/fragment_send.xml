@@ -142,7 +142,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/enter_your_text_here"
-            android:inputType="text"
+            android:imeOptions="actionNone"
+            android:inputType="textMultiLine"
+            android:maxLines="3"
             android:minHeight="55dp" />
     </com.google.android.material.textfield.TextInputLayout>
 
