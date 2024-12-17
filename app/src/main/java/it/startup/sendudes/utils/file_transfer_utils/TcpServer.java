@@ -148,7 +148,7 @@ public class TcpServer {
                 if (nBytesRead == -1) {
                     throw new IOException("Unexpected end of stream");
                 }
-                fos.write(buffer, 0, nBytesRead);//Write to dick
+                fos.write(buffer, 0, nBytesRead);//Write to disk
                 fos.flush();
                 nTotalRead += nBytesRead;
 
