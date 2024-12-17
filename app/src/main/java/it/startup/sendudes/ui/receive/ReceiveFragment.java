@@ -173,7 +173,7 @@ public class ReceiveFragment extends Fragment {
     }
 
     /**
-     * Function that
+     * Function that simulates a sort of handshake with another host
      */
     private void broadcastReplier() {
         broadcastReplierThread = new Thread(() -> {
