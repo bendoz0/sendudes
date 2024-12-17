@@ -40,68 +40,12 @@ public class HistoryFragment extends Fragment {
         FilesDbAdapter fda = new FilesDbAdapter(getContext()).open();
 
         Cursor cursor = fda.fetchAllFiles();
-//        ArrayAdapter<String> adapter = getFilesAdapter(cursor);
-//        binding.historyList.setAdapter(adapter);
         FilesCursorAdapter cursorAdapter = new FilesCursorAdapter(binding.getRoot().getContext(), cursor, getActivity());
         ListView historyList = binding.historyList;
-//        View v = cursorAdapter.newView(getContext(), cursor, historyList);
-//        cursorAdapter.bindView(v, getContext(), cursor);
         historyList.setAdapter(cursorAdapter);
         fda.close();
         return root;
     }
-
-    private ArrayAdapter<String> getFilesAdapter(Cursor cursor){
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1);
-        if (cursor.moveToFirst()) {
-            do {
-                String fileDetails = "";
-                int columns = cursor.getColumnCount();
-                for (int i = 1; i < columns; i++){
-                    switch (i){
-                        case 1:
-                            fileDetails += "File name: " + cursor.getString(i) + "\n";
-                            break;
-                        case 2:
-                            fileDetails += "Size: " + cursor.getString(i) + "\n";
-                            break;
-                        case 3:
-                            fileDetails += "time stamp: " + cursor.getString(i) + "\n";
-                            break;
-                        case 4:
-                            fileDetails += (cursor.getInt(i) == 1 ? "File sent" : "File received") + "\n";
-                            break;
-                        case 5:
-                            fileDetails += "uri: " + cursor.getString(i) + "\n";
-//                            loadSelectedFileThumbnail(Uri.parse(cursor.getString(i)));
-                            break;
-                        default:
-                            fileDetails += cursor.getString(i) + "\n";
-                            break;
-                    }
-                }
-                adapter.add(fileDetails);
-            } while (cursor.moveToNext());
-        }
-        return adapter;
-    }
-
-
-//    private void loadSelectedFileThumbnail(Uri uri) {
-//            try {
-//                Size mSize = new Size(105, 105);
-//                CancellationSignal ca = new CancellationSignal();
-//                Bitmap bitmapThumbnail = requireActivity().getContentResolver().loadThumbnail(uri, mSize, ca);
-//                System.out.println("THUMBNAIL: " + bitmapThumbnail);
-//
-//                binding.debug.setImageBitmap(bitmapThumbnail);
-//            } catch (Exception e) {
-//                System.out.println("ERROR CREATING THUMBNAIL: " + e.getMessage());
-////                if (Objects.requireNonNull(e.getMessage()).contains("audio")) {
-////                    loadAudioFileThumbnail();
-////                }
-//            }
-//    }
 
     @Override
     public void onDestroyView() {
