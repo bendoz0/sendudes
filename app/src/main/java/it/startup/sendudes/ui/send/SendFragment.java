@@ -104,7 +104,6 @@ public class SendFragment extends Fragment {
             public void run() {
                 if (udpHandler != null) {
                     udpHandler.broadcast(MSG_CLIENT_PING);
-//                    TODO:  MAKE IT WORK WITHOUT REFRESHING THE PAGE/FRAGMENT
                     handler.postDelayed(this, 3000);
                 }
 
@@ -118,30 +117,27 @@ public class SendFragment extends Fragment {
         binding.twUserIp.setText(username);
         binding.progressBar.setProgress(0);
         binding.fileChosen.setOnClickListener(v -> onClickChooseFile());
-        binding.btnNetworkScanner.setOnClickListener(v -> {
-            if (udpHandler != null)
-                onClickScanNetwork();
-            else Toast.makeText(getContext(), "No internet found", Toast.LENGTH_LONG).show();
 
-        });
-        binding.customIpSetBtn.setOnClickListener(v -> {
-            if (binding.customIpInput.getText() != null && !binding.customIpInput.getText().toString().isEmpty()) {
-                if (IPAddressValidator.isValidIPv4(binding.customIpInput.getText().toString())) {
-                    String selectedIp = binding.customIpInput.getText().toString();
-                    tryToSendFile(selectedIp);
-                } else {
-                    Toast.makeText(getContext(), "Invalid User IP", Toast.LENGTH_LONG).show();
-                    binding.customIpInput.setText("");
-                }
-            }
-        });
-        binding.foundIps.setOnItemClickListener((adapterView, view, position, id) -> {
-            String ip = (String) adapterView.getItemAtPosition(position);
-            tryToSendFile(ip.split("#", 2)[1]);
-        });
-        binding.foundIps.setAdapter(ipListAdapter);
+        try {
+            handleNetworkScanClick();
 
-        OnListUpdate updatedList = scannedIPs -> {
+            handleCustomIpSetClick();
+
+            handleFileSendOnUserClick();
+
+            OnListUpdate updatedList = refreshScannedIpList();
+
+            if (udpHandler != null) udpHandler.onListUpdate(updatedList);
+
+            tcpStarter();
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "no connection", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @NonNull
+    private OnListUpdate refreshScannedIpList() {
+        return scannedIPs -> {
             requireActivity().runOnUiThread(() -> {
                 if (scannedIPs == null) {
                     Toast.makeText(getContext(), "no connection", Toast.LENGTH_SHORT).show();
@@ -163,13 +159,40 @@ public class SendFragment extends Fragment {
                 }
             });
         };
-        if (udpHandler != null) udpHandler.onListUpdate(updatedList);
+    }
 
-        try {
-            tcpStarter();
-        } catch (Exception e) {
-            Toast.makeText(getContext(), "no connection", Toast.LENGTH_SHORT).show();
+    private void handleFileSendOnUserClick() {
+        binding.foundIps.setOnItemClickListener((adapterView, view, position, id) -> {
+            String ip = (String) adapterView.getItemAtPosition(position);
+            tryToSendFile(ip.split("#", 2)[1]);
+        });
+        binding.foundIps.setAdapter(ipListAdapter);
+    }
+
+    private void handleCustomIpSetClick() {
+        binding.customIpSetBtn.setOnClickListener(v -> {
+            if (binding.customIpInput.getText() != null && !binding.customIpInput.getText().toString().isEmpty()) {
+                validateAndSendFile(binding.customIpInput.getText().toString());
+            }
+        });
+    }
+
+    private void validateAndSendFile(String ip) {
+        if (IPAddressValidator.isValidIPv4(ip)) {
+            tryToSendFile(ip);
+        } else {
+            Toast.makeText(getContext(), "Invalid User IP", Toast.LENGTH_LONG).show();
+            binding.customIpInput.setText("");
         }
+    }
+
+    private void handleNetworkScanClick() {
+        binding.btnNetworkScanner.setOnClickListener(v -> {
+            if (udpHandler != null)
+                onClickScanNetwork();
+            else Toast.makeText(getContext(), "No internet found", Toast.LENGTH_LONG).show();
+
+        });
     }
 
     void tryToSendFile(String ip) {
@@ -190,27 +213,29 @@ public class SendFragment extends Fragment {
             binding.scannedMsg.setText(R.string.sendFragment_loading);
         });
 
-        new Thread(() -> {
-            try {
-                long startTime = System.currentTimeMillis();
-                long endTime = startTime + (SCAN_DURATION_SECONDS * 1000);
+        new Thread(this::initiateNetworkScan).start();
+    }
 
-                while (System.currentTimeMillis() < endTime && isScanning) {
-                    if (udpHandler != null) {
-                        udpHandler.scanNetwork();
-                    }
+    private void initiateNetworkScan() {
+        try {
+            long startTime = System.currentTimeMillis();
+            long endTime = startTime + (SCAN_DURATION_SECONDS * 1000);
+
+            while (System.currentTimeMillis() < endTime && isScanning) {
+                if (udpHandler != null) {
+                    udpHandler.scanNetwork();
                 }
-            } catch (Exception e) {
-                Log.e("ScanNetwork", "Error during network scan", e);
-            } finally {
-                isScanning = false;
-                requireActivity().runOnUiThread(() -> {
-                    binding.btnNetworkScanner.setEnabled(true);
-                    binding.scanProgressBar.setVisibility(View.GONE);
-                    binding.scannedMsg.setText(R.string.no_user_found);
-                });
             }
-        }).start();
+        } catch (Exception e) {
+            Log.e("ScanNetwork", "Error during network scan", e);
+        } finally {
+            isScanning = false;
+            requireActivity().runOnUiThread(() -> {
+                binding.btnNetworkScanner.setEnabled(true);
+                binding.scanProgressBar.setVisibility(View.GONE);
+                binding.scannedMsg.setText(R.string.no_user_found);
+            });
+        }
     }
 
     private void tcpStarter() {
@@ -218,6 +243,8 @@ public class SendFragment extends Fragment {
                 requireActivity().runOnUiThread(() -> {
                             Toast.makeText(getContext(), "TRANSFER FINISHED SUCCESSFULLY", Toast.LENGTH_SHORT).show();
                             selectedFileUri = null;
+                            binding.selectedFileThumbnail.setImageResource(0);
+                            binding.fileChosen.setText(R.string.select_a_file);
                         }
                 ));
         tcpClient.setConnectionBusyEvent(() ->
@@ -261,32 +288,32 @@ public class SendFragment extends Fragment {
     }
 
 
-    //Metodo per gestire il Btn "Choose File"
+    /**
+     * Method to handle the "Choose File" button
+     **/
     private void onClickChooseFile() {
         askForFilePermission(this, this::chooseFile);
     }
 
-
     private void chooseFile() {
-        //intent è un oggetto che permeate di avviare il file picker di android per scegliere un file
+        //Intent is an object that allows you to launch the Android file picker to choose a file
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         /*
-        Indica che tutti i file del dispositivo possono essere selezionati
-        * "image/*" per selezionare solo immagini
-        * "application/*" per selezionere solo file PDF
+        Indicates that all files on the device can be selected
+            * "image/*" to select only images
+            * "application/*" to select only PDF files
         */
         intent.setType("*/*");
-        //aggiunge all'oggetto intent un filtro per visualizzare i file direttamente apribili
+        //Adds a filter to the intent object to display only directly openable files
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        //permette di eseguire l'oggetto intent, e di mostrare i risultati
+        //Allows the intent object to be executed and show the results
         filePickerLauncher.launch(intent);
     }
 
 
-    /*
-     * filePickerLauncher is an ActivityResultLauncher<Intent>
-     * that handles the result of the file picker activity.
-     */
+    /**
+     * filePickerLauncher is an ActivityResultLauncher<Intent> that handles the result of the file picker activity.
+     **/
     private final ActivityResultLauncher<Intent> filePickerLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == getActivity().RESULT_OK && result.getData() != null) {
@@ -300,7 +327,7 @@ public class SendFragment extends Fragment {
                 Toast.makeText(getContext(), "Nessun file selezionato", Toast.LENGTH_SHORT).show();
             });
 
-    void updateFileChosenButton(){
+    void updateFileChosenButton() {
         requireActivity().runOnUiThread(() -> {
             binding.fileChosen.setText((selectedFileUri != null ? "FILE: " + FileUtils.getFileInfoFromUri(requireContext(), selectedFileUri).name : "Select a file"));
             FileThumbnailLoader.loadFileThumbnail(binding.fileChosen.getText().toString(), selectedFileUri, binding, requireActivity(), 105, 105);
