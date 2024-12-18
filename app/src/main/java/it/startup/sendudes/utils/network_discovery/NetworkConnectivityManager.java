@@ -28,19 +28,13 @@ public class NetworkConnectivityManager {
     }
 
     public void startListening() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            networkCallback = new NetworkCallback();
-            connectivityManager.registerDefaultNetworkCallback(networkCallback);
-        } else {
-            registerLegacyNetworkReceiver();
-        }
+        networkCallback = new NetworkCallback();
+        connectivityManager.registerDefaultNetworkCallback(networkCallback);
         updateNetworkInfo();
     }
 
     public void stopListening() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && networkCallback != null) {
-            connectivityManager.unregisterNetworkCallback(networkCallback);
-        }
+        connectivityManager.unregisterNetworkCallback(networkCallback);
     }
 
     private class NetworkCallback extends ConnectivityManager.NetworkCallback {
@@ -55,16 +49,6 @@ public class NetworkConnectivityManager {
                 listener.onNoNetwork();
             }
         }
-    }
-
-    private void registerLegacyNetworkReceiver() {
-        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        context.registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                updateNetworkInfo();
-            }
-        }, filter);
     }
 
     private void updateNetworkInfo() {

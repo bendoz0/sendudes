@@ -73,8 +73,6 @@ public class SendFragment extends Fragment implements OnIPChangedListener {
         String currentIp = NetworkConnectivityManager.getCurrentIPAddress();
         if (!currentIp.equals("Cant find IP")) {
             try {
-                udpHandler = new UDP_NetworkUtils(PING_PORT, RECEIVE_PORT);
-
                 uiActivityStart();
                 broadcastPingEverySecond();
                 broadcastHandshaker();
@@ -360,11 +358,6 @@ public class SendFragment extends Fragment implements OnIPChangedListener {
         requireActivity().runOnUiThread(() -> {
             binding.twUserIp.setText(username());
             try {
-                if (udpHandler != null) {
-                    udpHandler.closeSockets();
-                }
-
-
                 udpHandler = new UDP_NetworkUtils(PING_PORT, RECEIVE_PORT);
 
                 uiActivityStart();

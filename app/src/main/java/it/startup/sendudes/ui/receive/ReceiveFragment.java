@@ -65,9 +65,6 @@ public class ReceiveFragment extends Fragment implements OnIPChangedListener {
         if (!currentIp.equals("Cant find IP")) {
             try {
                 binding.twUserIp.setText(username());
-                udpHandler = new UDP_NetworkUtils(RECEIVE_PORT, PING_PORT);
-                fileTransferSocket = new ServerSocket(FILE_TRANSFER_PORT, 1);
-
                 broadcastReplier();
                 startFileTransferServer();
             } catch (Exception e) {
@@ -238,7 +235,7 @@ public class ReceiveFragment extends Fragment implements OnIPChangedListener {
                 udpHandler.closeSockets();
                 udpHandler = null;
             }
-
+            //CLOSE TCP server socket
             binding.btnAcceptData.setEnabled(false);
             binding.btnRejectData.setEnabled(false);
             binding.cardView.setVisibility(View.GONE);
