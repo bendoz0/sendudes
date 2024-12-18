@@ -22,7 +22,6 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 
-import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Objects;
 
@@ -30,18 +29,24 @@ import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentReceiveBinding;
 import it.startup.sendudes.utils.file_transfer_utils.FileTransferPacket;
 import it.startup.sendudes.utils.file_transfer_utils.TcpServer;
+import it.startup.sendudes.utils.network_discovery.NetworkConnectivityManager;
+import it.startup.sendudes.utils.network_discovery.OnIPChangedListener;
 import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
 
-public class ReceiveFragment extends Fragment {
+public class ReceiveFragment extends Fragment implements OnIPChangedListener {
     private FragmentReceiveBinding binding;
     private UDP_NetworkUtils udpHandler;
     private Thread broadcastReplierThread;
+    private NetworkConnectivityManager networkConnectivityManager;
     private Thread tcpSeverStarterThread;
     private ServerSocket fileTransferSocket;
     private FileTransferPacket fileInArrival;
 
+
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentReceiveBinding.inflate(inflater, container, false);
+        networkConnectivityManager = new NetworkConnectivityManager(requireContext(), this);
+
         return binding.getRoot();
     }
 
@@ -52,26 +57,32 @@ public class ReceiveFragment extends Fragment {
         binding.btnAcceptData.setEnabled(false);
         binding.progressBar.setProgress(0);
         binding.btnRejectData.setEnabled(false);
-        binding.twUserIp.setText(username);
         binding.cardView.setVisibility(View.GONE);
 
-        try {
-            udpHandler = new UDP_NetworkUtils(RECEIVE_PORT, PING_PORT, username);
-            fileTransferSocket = new ServerSocket(FILE_TRANSFER_PORT, 1);
-        } catch (IOException e) {
-            Log.d("ERROR ON START", Objects.requireNonNull(e.getMessage()));
+        networkConnectivityManager.startListening();
+
+        String currentIp = NetworkConnectivityManager.getCurrentIPAddress();
+        if (!currentIp.equals("Cant find IP")) {
+            try {
+                binding.twUserIp.setText(username());
+                udpHandler = new UDP_NetworkUtils(RECEIVE_PORT, PING_PORT);
+                fileTransferSocket = new ServerSocket(FILE_TRANSFER_PORT, 1);
+
+                broadcastReplier();
+                startFileTransferServer();
+            } catch (Exception e) {
+                Log.d("ERROR ON START", Objects.requireNonNull(e.getMessage()));
+            }
         }
-        broadcastReplier();
-        startFileTransferServer();
         askForFilePermission(this, () -> {
         });
     }
+
 
     private void createPulseAnimation() {
         Animation pulseAnimation = AnimationUtils.loadAnimation(requireContext(), R.anim.circular_pulse_animation);
         binding.pulseView.startAnimation(pulseAnimation);
     }
-
 
     @Override
     public void onResume() {
@@ -149,10 +160,9 @@ public class ReceiveFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
+
         if (udpHandler != null) {
-            for (int i = 0; i < 10; i++) {
-                udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
-            }
+            broadcastClientNotReceiving();
         }
         if (tcpSeverStarterThread != null && tcpSeverStarterThread.isAlive())
             tcpSeverStarterThread.interrupt();
@@ -165,6 +175,13 @@ public class ReceiveFragment extends Fragment {
             System.out.println(e.getMessage());
         }
         if (udpHandler != null) udpHandler.closeSockets();
+        networkConnectivityManager.stopListening();
+    }
+
+    private void broadcastClientNotReceiving() {
+        for (int i = 0; i < 10; i++) {
+            udpHandler.broadcast(MSG_CLIENT_NOT_RECEIVING);
+        }
     }
 
     private void startFileTransferServer() {
@@ -191,5 +208,40 @@ public class ReceiveFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    @Override
+    public void onNetworkChanged(String newIp) {
+        requireActivity().runOnUiThread(() -> {
+            binding.twUserIp.setText(username());
+            try {
+                if (udpHandler == null) {
+                    udpHandler = new UDP_NetworkUtils(RECEIVE_PORT, PING_PORT);
+                }
+                if (fileTransferSocket == null)
+                    fileTransferSocket = new ServerSocket(FILE_TRANSFER_PORT, 1);
+                broadcastReplier();
+                startFileTransferServer();
+
+            } catch (Exception e) {
+                Log.e("Network Change", "Failed to reinitialize UDP handler", e);
+            }
+        });
+    }
+
+    @Override
+    public void onNoNetwork() {
+        requireActivity().runOnUiThread(() -> {
+            binding.twUserIp.setText(username());
+
+            if (udpHandler != null) {
+                udpHandler.closeSockets();
+                udpHandler = null;
+            }
+
+            binding.btnAcceptData.setEnabled(false);
+            binding.btnRejectData.setEnabled(false);
+            binding.cardView.setVisibility(View.GONE);
+        });
     }
 }

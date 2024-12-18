@@ -13,8 +13,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,12 +23,10 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import it.startup.sendudes.R;
 import it.startup.sendudes.databinding.FragmentSendBinding;
@@ -39,10 +35,12 @@ import it.startup.sendudes.utils.file_transfer_utils.TcpClient;
 import it.startup.sendudes.utils.file_transfer_utils.tcp_events.ProgressListener;
 import it.startup.sendudes.utils.files_utils.FileThumbnailLoader;
 import it.startup.sendudes.utils.files_utils.FileUtils;
+import it.startup.sendudes.utils.network_discovery.NetworkConnectivityManager;
+import it.startup.sendudes.utils.network_discovery.OnIPChangedListener;
 import it.startup.sendudes.utils.network_discovery.OnListUpdate;
 import it.startup.sendudes.utils.network_discovery.UDP_NetworkUtils;
 
-public class SendFragment extends Fragment {
+public class SendFragment extends Fragment implements OnIPChangedListener {
     //FragmentHomeBinding is a class generated automatically when View Binding is enabled (in the android v8 and later on ig)
     private FragmentSendBinding binding;
     private Thread broadcastHandshakeThread;
@@ -54,41 +52,49 @@ public class SendFragment extends Fragment {
     private ArrayAdapter<String> ipListAdapter;
     private boolean isScanning = false;
     private final int SCAN_DURATION_SECONDS = 2;
-
+    private NetworkConnectivityManager networkConnectivityManager;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentSendBinding.inflate(inflater, container, false);
+        networkConnectivityManager = new NetworkConnectivityManager(requireContext(), this);
+
         return binding.getRoot();
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        try {
-            udpHandler = new UDP_NetworkUtils(PING_PORT, RECEIVE_PORT, username);
-            tcpClient = new TcpClient();
-            ipListAdapter = new ArrayAdapter<>(
-                    requireContext(),
-                    android.R.layout.simple_dropdown_item_1line,
-                    new ArrayList<>()
-            );
-        } catch (Exception e) {
-            Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
+        networkConnectivityManager.startListening();
+        ipListAdapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_dropdown_item_1line,
+                new ArrayList<>()
+        );
+        String currentIp = NetworkConnectivityManager.getCurrentIPAddress();
+        if (!currentIp.equals("Cant find IP")) {
+            try {
+                udpHandler = new UDP_NetworkUtils(PING_PORT, RECEIVE_PORT);
+
+                uiActivityStart();
+                broadcastPingEverySecond();
+                broadcastHandshaker();
+            } catch (Exception e) {
+                Log.d("SOCKET ERROR", e.getMessage() == null ? "its null" : e.getMessage());
+            }
         }
-        uiActivityStart();
-        broadcastPingEverySecond();
-        broadcastHandshaker();
     }
 
     @Override
     public void onStop() {
         super.onStop();
+
         isScanning = false;
         if (handler != null) handler.removeCallbacksAndMessages(null);
         if (broadcastHandshakeThread != null && broadcastHandshakeThread.isAlive())
             broadcastHandshakeThread.interrupt();
         if (tcpClientThread != null && tcpClientThread.isAlive()) tcpClientThread.interrupt();
         if (udpHandler != null) udpHandler.closeSockets();
+        networkConnectivityManager.stopListening();
     }
 
     @Override
@@ -114,7 +120,8 @@ public class SendFragment extends Fragment {
     }
 
     private void uiActivityStart() {
-        binding.twUserIp.setText(username);
+        tcpClient = new TcpClient();
+        binding.twUserIp.setText(username());
         binding.progressBar.setProgress(0);
         binding.fileChosen.setOnClickListener(v -> onClickChooseFile());
 
@@ -129,7 +136,9 @@ public class SendFragment extends Fragment {
 
             if (udpHandler != null) udpHandler.onListUpdate(updatedList);
 
-            tcpStarter();
+            if (tcpClient != null) {
+                tcpStarter();
+            }
         } catch (Exception e) {
             Toast.makeText(getContext(), "no connection", Toast.LENGTH_SHORT).show();
         }
@@ -140,7 +149,7 @@ public class SendFragment extends Fragment {
         return scannedIPs -> {
             requireActivity().runOnUiThread(() -> {
                 if (scannedIPs == null) {
-                    Toast.makeText(getContext(), "no connection", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "no connection found", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if (scannedIPs.isEmpty()) {
@@ -153,9 +162,11 @@ public class SendFragment extends Fragment {
                 } else {
                     binding.scannedMsg.setVisibility(View.GONE);
                     binding.foundIps.setVisibility(View.VISIBLE);
-                    ipListAdapter.clear();
-                    ipListAdapter.addAll(scannedIPs.values());
-                    ipListAdapter.notifyDataSetChanged();
+                    if (ipListAdapter != null) {
+                        ipListAdapter.clear();
+                        ipListAdapter.addAll(scannedIPs.values());
+                        ipListAdapter.notifyDataSetChanged();
+                    }
                 }
             });
         };
@@ -262,15 +273,18 @@ public class SendFragment extends Fragment {
     public void startFileTransfer(String ip) {
         try {
             binding.progressBar.setProgress(0);
-            tcpClientThread = new Thread(() -> tcpClient.sendFileToServer(ip, FILE_TRANSFER_PORT, selectedFileUri, username, binding.optionalMessage.getText().toString(), getContext(), new ProgressListener() {
-                @Override
-                public void onProgressUpdate(int progress) {
-                    if (binding != null && binding.progressBar != null)
-                        binding.progressBar.setProgress(progress);
-                }
-            }));
-            tcpClientThread.start();
+            if (tcpClient != null) {
+                tcpClientThread = new Thread(() -> tcpClient.sendFileToServer(ip, FILE_TRANSFER_PORT, selectedFileUri, username(), binding.optionalMessage.getText().toString(), getContext(), new ProgressListener() {
+                    @Override
+                    public void onProgressUpdate(int progress) {
+                        if (binding != null && binding.progressBar != null)
+                            binding.progressBar.setProgress(progress);
+                    }
+                }));
+                tcpClientThread.start();
+            }
         } catch (Exception e) {
+            Log.d("HERE", e.getMessage());
             Toast.makeText(requireContext(), "Ops! Try again", Toast.LENGTH_SHORT).show();
         }
 
@@ -339,5 +353,45 @@ public class SendFragment extends Fragment {
         boolean isFileUriValid = selectedFileUri != null;
 
         return (isOptionalMessageValid || isFileUriValid);
+    }
+
+    @Override
+    public void onNetworkChanged(String newIp) {
+        requireActivity().runOnUiThread(() -> {
+            binding.twUserIp.setText(username());
+            try {
+                if (udpHandler != null) {
+                    udpHandler.closeSockets();
+                }
+
+
+                udpHandler = new UDP_NetworkUtils(PING_PORT, RECEIVE_PORT);
+
+                uiActivityStart();
+                broadcastPingEverySecond();
+                broadcastHandshaker();
+            } catch (Exception e) {
+                Log.e("Network Change", "Failed to reinitialize UDP handler", e);
+            }
+        });
+    }
+
+    @Override
+    public void onNoNetwork() {
+        requireActivity().runOnUiThread(() -> {
+            binding.twUserIp.setText(username());
+
+            if (udpHandler != null) {
+                udpHandler.closeSockets();
+                udpHandler = null;
+            }
+
+            if (handler != null) {
+                handler.removeCallbacksAndMessages(null);
+            }
+
+            binding.scannedMsg.setVisibility(View.VISIBLE);
+            binding.foundIps.setVisibility(View.GONE);
+        });
     }
 }

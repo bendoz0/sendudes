@@ -1,8 +1,8 @@
 package it.startup.sendudes.utils;
 
-import static it.startup.sendudes.utils.network_discovery.NetworkUtils.getMyIP;
-
 import com.github.javafaker.Faker;
+
+import it.startup.sendudes.utils.network_discovery.NetworkConnectivityManager;
 
 public interface IConstants {
     int REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE = 1;
@@ -17,6 +17,13 @@ public interface IConstants {
     String MSG_REJECT_CLIENT = "REJECT";
     String MSG_BUSY_CLIENT = "BUSY";
     String MSG_FILETRANSFER_FINISHED = "FILE_RECEIVED";
-    String username = new Faker().leagueOfLegends().champion() + "#" + getMyIP();
+
+    String LOL_USERNAME = new Faker().leagueOfLegends().champion();
+    static String username() {
+        String currentIp = NetworkConnectivityManager.getCurrentIPAddress();
+        return LOL_USERNAME + "#" +
+                (currentIp != null && !currentIp.equals("Cant find IP") ? currentIp : "NoIP");
+    }
+
 
 }
