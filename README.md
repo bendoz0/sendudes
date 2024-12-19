@@ -43,9 +43,9 @@ cd sendudes
 
 ## 📱 Usage Guide
 ### Connecting via IP Address
-1. Tap the "Connect via IP" button
-2. Enter the target device's IP address
-3. Press connect to establish connection
+1. Open the app and select a file
+2. Compose your message in the text field
+3. Enter the target device's IP address and tap the "Send" button
 
 ### Sending Files with Messages
 1. Open the app and select a file
@@ -55,9 +55,8 @@ cd sendudes
 ### Sending Messages Only
 1. Navigate to the Send Page
 2. Type your message in the text field
-3. Select the receiving device
-4. Tap send to transmit your message
-
+3. Select the receiving device to send
+   
 ### Receiving Files and Messages
 1. Navigate to the Receive Page
 2. Ensure your device is discoverable
