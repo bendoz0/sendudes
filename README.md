@@ -24,13 +24,12 @@ Sendudes is a modern, efficient file-sharing and messaging application for Andro
 - **Intuitive Navigation**: Easy-to-use bottom navigation with three main sections:
   - 📤 **Send Page**: Select files and compose messages to send
   - 📥 **Receive Page**: Accept incoming files and messages
-  - 📋 **History Page**: Comprehensive log of all transfers and messages
+  - 📋 **History Page**: Comprehensive log of all transfers
 
 ### Additional Features
 - **Transfer Progress**: Real-time progress tracking for file transfers
-- **File Preview**: Preview supported file types before sending or receiving
-- **Search Functionality**: Quickly find files and messages in transfer history
-- **Message Status**: See when messages are delivered and read
+- **File Preview**: Preview supported file types before sending
+- **Search Functionality**: Quickly find files in transfer history
 
 ## 🚀 Getting Started
 ### Installation
