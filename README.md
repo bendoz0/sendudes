@@ -3,7 +3,17 @@
 [![Java](https://img.shields.io/badge/Java-007396?style=flat&logo=java&logoColor=white)](https://www.java.com/)
 [![Material Design](https://img.shields.io/badge/Material%20Design-6200EE?style=flat&logo=materialdesign&logoColor=white)](https://material.io/)
 
+> ⚠️ **Security Notice**: This application uses unencrypted TCP for data transfer. It is not recommended for sharing confidential or sensitive information.
+
 Sendudes is a modern, efficient file-sharing and messaging application for Android that emphasizes simplicity and user experience. Built with Material Design principles, it provides a seamless way to transfer files and messages between Android devices while maintaining a clean and intuitive interface.
+
+## System Requirements
+- Minimum Android Version: 10 (API Level 29)
+- Storage: 10MB free space
+- Wi-Fi or mobile data connection
+
+## Download
+Get the latest version from the [Releases](https://github.com/bendoz0/sendudes/releases) page.
 
 ## 📱 Key Features
 ### Core Functionality
